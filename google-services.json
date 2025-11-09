@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "815980858345",
+    "project_id": "stream-disc",
+    "storage_bucket": "stream-disc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:815980858345:android:14f0f4caf6da2ec21ed978",
+        "android_client_info": {
+          "package_name": "com.streamdisc.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "815980858345-op200v77dnuvut8e3qrukq2gans3u8ne.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrObMcjtqcglxe3quitnntJV4aq-uY8_U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "815980858345-op200v77dnuvut8e3qrukq2gans3u8ne.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
+

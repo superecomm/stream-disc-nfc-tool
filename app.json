@@ -23,7 +23,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#000000"
       },
-      "package": "com.streamdisc.nfctool",
+      "package": "com.streamdisc.app",
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "android.permission.NFC",
         "android.permission.READ_EXTERNAL_STORAGE",

@@ -14,9 +14,11 @@ class NfcService {
         this.isInitialized = true;
         return true;
       }
+      console.log('NFC not supported on this device');
       return false;
     } catch (error) {
       console.error('Error initializing NFC:', error);
+      // Don't throw, just return false so app doesn't crash
       return false;
     }
   }

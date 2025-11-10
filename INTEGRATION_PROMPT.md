@@ -14,7 +14,8 @@ Copy and paste this into Cursor Agent:
 I want to integrate the sophisticated Studio features from this repository branch:
 https://github.com/superecomm/stream-disc-nfc-tool/tree/studio-migration
 
-Please read and follow the comprehensive MIGRATION.md guide located in that branch.
+⚠️ CRITICAL: First read MAIN_APP_INTEGRATION.md for main app-specific requirements!
+Then follow the comprehensive MIGRATION.md guide.
 
 The Studio app provides:
 - Album/Mixtape creation with NFC burning
@@ -27,42 +28,45 @@ The Studio app provides:
 - Admin/testing tools
 
 Integration requirements:
-1. Copy all Studio files from the branch to appropriate locations in this app
-2. Copy screens to app/studio/ directory
-3. Copy components to src/components/
-4. Copy services to src/services/ (merge with existing auth/firestore services)
-5. Add Studio tab to main navigation with flame icon
-6. Update app.json with NFC permissions and deep linking configuration
-7. Install required dependencies (react-native-nfc-manager, expo-image-picker, expo-document-picker)
-8. Ensure all imports resolve correctly
-9. Connect Studio's album creation to this Player app's playback system
-10. Update NFC deep links to launch this Player app (not the Studio app)
-11. Replace our existing basic studio flow with this sophisticated version
-12. Maintain all minimal UI styles (thin icons, no shadows, subtle animations)
-13. Keep subscription gating (premium features locked)
-14. Preserve storage management (2GB free, 5GB Pro, 30GB Business)
+1. ⚠️ DO NOT COPY BottomNav.tsx - Main app has its own navigation
+2. Studio accessed via Plus (+) button, NOT a separate tab
+3. Replace TAP icon with FIRE LOGO in NfcScanModal
+4. Update Firebase collection names in firestore.ts to match main app
+5. Remove Studio home button - use main app's Home for player
+6. Copy Studio content cards to trigger from Plus (+) button
+7. Replace old NFC flow completely with Studio's flow
+8. Install dependencies (react-native-nfc-manager, expo-image-picker, expo-document-picker)
+9. Update app.json with NFC permissions only
+10. Connect Studio's album creation to main Player app's library
+11. Maintain all minimal UI styles (thin icons, no shadows, subtle animations)
+12. Keep subscription gating (premium features locked)
+13. Map Studio schema to main app schema if field names differ
 
 Key files to prioritize:
-- MIGRATION.md (read this first for complete instructions)
+- ⚠️ MAIN_APP_INTEGRATION.md (READ THIS FIRST - critical navigation/Firebase details)
+- MIGRATION.md (complete instructions)
 - STUDIO_FILES_MANIFEST.md (detailed file descriptions)
-- src/components/NfcScanModal.tsx
-- src/components/BottomNav.tsx
-- app/index.tsx (Studio home)
+- src/components/NfcScanModal.tsx (modify with fire logo)
+- app/index.tsx (Studio content cards - trigger from Plus button)
 - app/create-album.tsx
 - src/services/nfc.ts
 - src/services/nfcVerification.ts
 
+⚠️ DO NOT COPY:
+- src/components/BottomNav.tsx (main app has its own navigation)
+
 After integration, the flow should be:
-User taps NFC → Firebase redirect → Opens in this Player app → Album plays
+Plus (+) button → Studio cards → Create album → Burn button → NFC modal (fire logo) → Write → Album in Player library
 
 Start by:
-1. Reading MIGRATION.md from the branch
-2. Analyzing both codebases (this app and the Studio branch)
-3. Creating a detailed integration plan
-4. Executing the migration step-by-step
-5. Testing that everything works
+1. Reading MAIN_APP_INTEGRATION.md (CRITICAL navigation and Firebase details)
+2. Reading MIGRATION.md (complete guide)
+3. Analyzing both codebases (this app and the Studio branch)
+4. Creating a detailed integration plan
+5. Executing the migration step-by-step
+6. Testing that everything works
 
-Please begin by fetching and reading the MIGRATION.md file from the studio-migration branch.
+Please begin by fetching and reading the MAIN_APP_INTEGRATION.md file first, then MIGRATION.md from the studio-migration branch.
 ```
 
 ---

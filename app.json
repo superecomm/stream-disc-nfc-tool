@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Stream Disc NFC Tool",
+    "name": "Stream Disc",
     "slug": "stream-disc-nfc-tool",
     "owner": "superecomm",
     "version": "1.0.0",
@@ -14,12 +14,18 @@
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.streamdisc.nfctool",
       "associatedDomains": [
         "applinks:app.streamdisc.com"
-      ]
+      ],
+      "infoPlist": {
+        "NFCReaderUsageDescription": "This app uses NFC to program Stream Discs with your content"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -53,7 +59,8 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
       "expo-router"

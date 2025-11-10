@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { firestoreService } from '../src/services/firestore';
 import { nfcVerificationService } from '../src/services/nfcVerification';
+import { db } from '../src/config/firebase';
 
 export default function AdminScreen() {
   const router = useRouter();
@@ -74,6 +75,33 @@ export default function AdminScreen() {
           <Text style={styles.subtitle}>
             Test NFC verification and seed manufacturing database
           </Text>
+        </View>
+
+        {/* Manufacturing Registry Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Firebase Project Info</Text>
+          
+          <View style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Project ID:</Text>
+              <Text style={styles.infoValue}>stream-disc</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Collections:</Text>
+              <Text style={styles.infoValue}>
+                • users{'\n'}
+                • discs{'\n'}
+                • registeredDiscs (Manufacturing){'\n'}
+                • discScans (Scan Logs)
+              </Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Console URL:</Text>
+              <Text style={[styles.infoValue, styles.linkText]}>
+                firebase.google.com/project/stream-disc
+              </Text>
+            </View>
+          </View>
         </View>
 
         {/* Manufacturing Registry Section */}
@@ -141,8 +169,7 @@ export default function AdminScreen() {
         <View style={styles.infoBox}>
           <Ionicons name="information-circle-outline" size={20} color="#9A9A9A" />
           <Text style={styles.infoText}>
-            These tools are for development and testing only. In production, discs are
-            registered during manufacturing and verified when scanned.
+            Scan data collection includes: UID, manufacturer, technology type, max size, ATQA, SAK, chip type, scan timestamp, and NDEF records. All data is logged to the 'discScans' collection in Firestore.
           </Text>
         </View>
 
@@ -263,12 +290,40 @@ const styles = StyleSheet.create({
     gap: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 20,
   },
   infoText: {
     flex: 1,
     fontSize: 12,
     color: '#9A9A9A',
     lineHeight: 18,
+  },
+  infoCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  infoRow: {
+    marginBottom: 16,
+  },
+  infoLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#9A9A9A',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  infoValue: {
+    fontSize: 13,
+    color: '#FFFFFF',
+    fontWeight: '400',
+    lineHeight: 20,
+  },
+  linkText: {
+    color: '#06FFA5',
   },
   loadingOverlay: {
     marginTop: 32,

@@ -359,7 +359,7 @@ export default function CreateAlbumScreen() {
             onPress={pickAudioFiles}
             activeOpacity={0.5}
           >
-            <Ionicons name="musical-notes-outline" size={20} color="#FFFFFF" />
+            <Ionicons name="musical-notes-outline" size={18} color="#FFFFFF" />
             <Text style={styles.actionButtonText}>Tracks</Text>
           </TouchableOpacity>
           
@@ -369,7 +369,7 @@ export default function CreateAlbumScreen() {
             activeOpacity={0.5}
           >
             <View style={styles.buttonIconContainer}>
-              <Ionicons name="videocam-outline" size={20} color={isPremium ? "#FFFFFF" : "#9A9A9A"} />
+              <Ionicons name="videocam-outline" size={18} color={isPremium ? "#FFFFFF" : "#9A9A9A"} />
               {!isPremium && (
                 <View style={styles.lockIconBadge}>
                   <Ionicons name="lock-closed" size={10} color="#FFFFFF" />
@@ -384,7 +384,7 @@ export default function CreateAlbumScreen() {
             onPress={pickCoverImage}
             activeOpacity={0.5}
           >
-            <Ionicons name="image-outline" size={20} color="#FFFFFF" />
+            <Ionicons name="image-outline" size={18} color="#FFFFFF" />
             <Text style={styles.actionButtonText}>Photo</Text>
           </TouchableOpacity>
 
@@ -393,7 +393,7 @@ export default function CreateAlbumScreen() {
             onPress={() => Alert.alert('Add Text', 'Use the Description field above to add stories, poems, track notes, or any text content.')}
             activeOpacity={0.5}
           >
-            <Ionicons name="text-outline" size={20} color="#FFFFFF" />
+            <Ionicons name="text-outline" size={18} color="#FFFFFF" />
             <Text style={styles.actionButtonText}>Text</Text>
           </TouchableOpacity>
         </View>
@@ -444,7 +444,7 @@ export default function CreateAlbumScreen() {
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <>
-              <Ionicons name="flame" size={20} color="#FFFFFF" />
+              <Ionicons name="flame" size={18} color="#FFFFFF" />
               <Text style={styles.burnButtonText}>Burn to Stream Disc</Text>
             </>
           )}
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 100,
   },
   header: {
     flexDirection: 'row',
@@ -659,13 +659,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    paddingVertical: 16,
+    paddingVertical: 12,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   actionButtonText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
     color: '#FFFFFF',
   },
@@ -695,7 +695,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderRadius: 10,
   },
   burnButtonDisabled: {
@@ -703,7 +703,7 @@ const styles = StyleSheet.create({
   },
   burnButtonText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.2,
   },

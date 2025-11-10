@@ -266,7 +266,7 @@ export default function HomeScreen() {
                 >
                   {type.locked && (
                     <View style={styles.lockBadge}>
-                      <Ionicons name="lock-closed-outline" size={20} color="#FFFFFF" />
+                      <Ionicons name="lock-closed" size={14} color="#FFFFFF" />
                     </View>
                   )}
                   <Text style={styles.cardTitle}>{type.title}</Text>
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 32,
+    paddingBottom: 100,
   },
   cardsContainer: {
     flexDirection: 'row',
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: cardWidth,
-    height: cardWidth * 0.75,
+    height: 120,
     borderRadius: 12,
     justifyContent: 'flex-end',
     padding: 12,
@@ -415,19 +415,19 @@ const styles = StyleSheet.create({
   },
   lockBadge: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    top: 8,
+    right: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '600',
     color: '#FFFFFF',
     letterSpacing: -0.3,

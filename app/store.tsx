@@ -66,6 +66,22 @@ export default function StoreScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Buy Blank Discs Banner */}
+        <TouchableOpacity
+          style={styles.blankDiscBanner}
+          onPress={() => router.push('/store/blank-discs')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.bannerIcon}>
+            <Ionicons name="disc-outline" size={24} color="#06FFA5" />
+          </View>
+          <View style={styles.bannerContent}>
+            <Text style={styles.bannerTitle}>Buy Blank Stream Discs</Text>
+            <Text style={styles.bannerSubtitle}>Official NFC-enabled discs</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#9A9A9A" />
+        </TouchableOpacity>
+
         {/* Category Filters */}
         <ScrollView
           horizontal
@@ -195,6 +211,41 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  blankDiscBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(6, 255, 165, 0.1)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(6, 255, 165, 0.3)',
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 20,
+    gap: 12,
+  },
+  bannerIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(6, 255, 165, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bannerContent: {
+    flex: 1,
+  },
+  bannerTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 2,
+    letterSpacing: -0.2,
+  },
+  bannerSubtitle: {
+    fontSize: 12,
+    color: '#9A9A9A',
+    fontWeight: '400',
   },
   filterContainer: {
     marginBottom: 20,

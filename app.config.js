@@ -1,5 +1,5 @@
 export default {
-  name: 'Stream Disc',
+  name: 'Stream Disc Studio',
   slug: 'stream-disc-nfc-tool',
   owner: 'superecomm',
   version: '1.0.0',
@@ -81,8 +81,8 @@ export default {
     bundler: 'metro',
     output: 'static',
     meta: {
-      name: 'Stream Disc - NFC Music Sharing',
-      description: 'Program NFC discs with music, videos, and photos. Share your content with a tap.',
+      name: 'Stream Disc Studio - Create & Share NFC Content',
+      description: 'Create music albums, videos, and photos on NFC-enabled Stream Discs. Share your content with a tap.',
       themeColor: '#000000',
     },
   },

@@ -2,6 +2,18 @@
 
 This document explains the logo assets and their usage throughout the project.
 
+## Branding Guidelines
+
+- **Company Name**: Stream Disc
+- **App Name**: Stream Disc Studio
+- **Project Code Name**: stream-disc-nfc-tool (internal reference only)
+
+**Public-Facing Usage**:
+- App Store/Play Store: "Stream Disc Studio"
+- Marketing Materials: "Stream Disc Studio by Stream Disc"
+- Social Media: "Stream Disc Studio"
+- Legal/Copyright: "© 2024 Stream Disc. All rights reserved."
+
 ## Logo Files
 
 ### 1. **Full Logo with Text** (`streamdisc-logo-full.png`)
@@ -59,7 +71,7 @@ stream-disc-nfc-tool/
 ```json
 {
   "expo": {
-    "name": "Stream Disc",
+    "name": "Stream Disc Studio",
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -82,22 +94,24 @@ stream-disc-nfc-tool/
 
 ```typescript
 export const metadata = {
-  title: 'Stream Disc - NFC Music Sharing',
-  description: 'Program NFC discs with music, videos, and photos. Share your content with a tap.',
+  title: 'Stream Disc Studio - Create & Share NFC Content',
+  description: 'Create music albums, videos, and photos on NFC-enabled Stream Discs. Share your content with a tap.',
+  applicationName: 'Stream Disc Studio',
   icons: {
     icon: '/favicon.png',
     apple: '/icon.png',
   },
   openGraph: {
-    title: 'Stream Disc',
-    description: 'Program NFC discs with music, videos, and photos',
+    title: 'Stream Disc Studio',
+    description: 'Create music albums, videos, and photos on NFC-enabled Stream Discs',
+    siteName: 'Stream Disc Studio',
     images: ['/social-banner.png'],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Stream Disc',
-    description: 'Program NFC discs with music, videos, and photos',
+    title: 'Stream Disc Studio',
+    description: 'Create music albums, videos, and photos on NFC-enabled Stream Discs',
     images: ['/social-banner.png'],
   },
 }
@@ -177,28 +191,30 @@ sharp -i adaptive-icon.png -o adaptive-icon-432.png resize 432 432
 
 ```html
 <!-- Basic Meta Tags -->
-<meta name="application-name" content="Stream Disc">
-<meta name="description" content="Program NFC discs with music, videos, and photos. Share your content with a tap.">
+<meta name="application-name" content="Stream Disc Studio">
+<meta name="description" content="Create music albums, videos, and photos on NFC-enabled Stream Discs. Share your content with a tap.">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/icon.png">
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://app.streamdisc.com">
-<meta property="og:title" content="Stream Disc - NFC Music Sharing">
-<meta property="og:description" content="Program NFC discs with music, videos, and photos">
+<meta property="og:site_name" content="Stream Disc Studio">
+<meta property="og:title" content="Stream Disc Studio - Create & Share NFC Content">
+<meta property="og:description" content="Create music albums, videos, and photos on NFC-enabled Stream Discs">
 <meta property="og:image" content="https://app.streamdisc.com/social-banner.png">
 
 <!-- Twitter -->
 <meta property="twitter:card" content="summary_large_image">
 <meta property="twitter:url" content="https://app.streamdisc.com">
-<meta property="twitter:title" content="Stream Disc - NFC Music Sharing">
-<meta property="twitter:description" content="Program NFC discs with music, videos, and photos">
+<meta property="twitter:title" content="Stream Disc Studio">
+<meta property="twitter:description" content="Create music albums, videos, and photos on NFC-enabled Stream Discs">
 <meta property="twitter:image" content="https://app.streamdisc.com/social-banner.png">
 
 <!-- PWA -->
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-title" content="Stream Disc Studio">
 ```
 
 ## Brand Guidelines

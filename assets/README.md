@@ -1,6 +1,12 @@
-# Stream Disc Assets
+# Stream Disc Studio Assets
 
-This folder contains all visual assets for the Stream Disc app.
+This folder contains all visual assets for the Stream Disc Studio app.
+
+## Branding
+
+- **Company**: Stream Disc
+- **App Name**: Stream Disc Studio
+- **Internal Project**: stream-disc-nfc-tool (code reference only)
 
 ## How to Add the Logo Files
 

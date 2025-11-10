@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,13 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Dimensions,
+  ScrollView,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { authService } from '../src/services/auth';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 48) / 2;
@@ -19,46 +23,164 @@ const contentTypes = [
     title: 'Album',
     gradient: ['#FF006E', '#8338EC'],
     route: '/create-album',
+    locked: false,
   },
   {
     id: 'mixtape',
     title: 'Mixtape',
     gradient: ['#FFBE0B', '#06FFA5'],
-    route: '/create-album', // Will differentiate later
+    route: '/create-album',
+    locked: false,
   },
   {
     id: 'film',
     title: 'Film',
     gradient: ['#06FFA5', '#3A86FF'],
-    route: '/create-album', // Placeholder
+    route: '/create-album',
+    locked: true,
   },
   {
     id: 'podcast',
     title: 'Podcast',
     gradient: ['#8338EC', '#FF006E'],
-    route: '/create-album', // Placeholder
+    route: '/create-album',
+    locked: true,
   },
   {
     id: 'audiobook',
     title: 'Audiobook',
     gradient: ['#FB5607', '#06FFA5'],
-    route: '/create-album', // Placeholder
+    route: '/create-album',
+    locked: true,
+  },
+  {
+    id: 'valentines',
+    title: "Valentine's Day",
+    gradient: ['#FF006E', '#FF4D6D'],
+    route: '/create-album',
+    locked: true,
+  },
+  {
+    id: 'wedding',
+    title: 'Wedding',
+    gradient: ['#FFD6E8', '#C77DFF'],
+    route: '/create-album',
+    locked: true,
+  },
+  {
+    id: 'babyreveal',
+    title: 'Baby Reveal',
+    gradient: ['#FFAFCC', '#A0C4FF'],
+    route: '/create-album',
+    locked: true,
+  },
+  {
+    id: 'memorial',
+    title: 'Memorial',
+    gradient: ['#6C757D', '#ADB5BD'],
+    route: '/create-album',
+    locked: true,
+  },
+  {
+    id: 'familyphotos',
+    title: 'Family Photos',
+    gradient: ['#FFBA08', '#06FFA5'],
+    route: '/create-album',
+    locked: true,
+  },
+  {
+    id: 'christmas',
+    title: 'Christmas',
+    gradient: ['#C1121F', '#2D6A4F'],
+    route: '/create-album',
+    locked: true,
   },
   {
     id: 'create',
     title: 'Create',
     gradient: ['#FF006E', '#FFBE0B'],
-    route: '/create-album', // Placeholder
+    route: '/create-album',
+    locked: true,
   },
 ];
 
 export default function HomeScreen() {
   const router = useRouter();
+  const [hasAccount, setHasAccount] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
 
-  const handleCardPress = (route: string, type: string) => {
+  useEffect(() => {
+    checkUserStatus();
+    
+    // Listen for auth state changes
+    const unsubscribe = authService.onAuthStateChange(() => {
+      checkUserStatus();
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const checkUserStatus = async () => {
+    const hasPermanentAccount = authService.hasPermanentAccount();
+    const premiumStatus = await authService.isPremium();
+    
+    setHasAccount(hasPermanentAccount);
+    setIsPremium(premiumStatus);
+  };
+
+  const handleCardPress = (route: string, type: string, locked: boolean) => {
+    if (locked) {
+      Alert.alert(
+        'Premium Feature',
+        'Upgrade to Premium to unlock this content type and create unlimited Stream Discs.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Upgrade', onPress: () => handlePremiumUpgrade() },
+        ]
+      );
+      return;
+    }
+
     if (type === 'album' || type === 'mixtape') {
       router.push('/create-album');
     }
+  };
+
+  const handlePremiumUpgrade = () => {
+    if (!hasAccount) {
+      // Show sign in/sign up prompt
+      Alert.alert(
+        'Save Your Work',
+        'Sign in to save your Stream Discs and access premium features.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign In', onPress: () => handleSignIn() },
+          { text: 'Sign Up', onPress: () => handleSignUp() },
+        ]
+      );
+    } else if (!isPremium) {
+      // Show premium upgrade
+      Alert.alert(
+        'Upgrade to Premium',
+        'Unlock all content types and create unlimited Stream Discs.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Upgrade', onPress: () => console.log('Navigate to subscription') },
+        ]
+      );
+    }
+  };
+
+  const handleSignIn = () => {
+    // TODO: Navigate to sign in screen
+    console.log('Navigate to sign in');
+    Alert.alert('Sign In', 'Sign in screen coming soon!');
+  };
+
+  const handleSignUp = () => {
+    // TODO: Navigate to sign up screen
+    console.log('Navigate to sign up');
+    Alert.alert('Sign Up', 'Sign up screen coming soon!');
   };
 
   return (
@@ -66,44 +188,66 @@ export default function HomeScreen() {
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.closeButton}>
-            <Text style={styles.closeButtonText}>✕</Text>
-          </TouchableOpacity>
+          <Text style={styles.title}>Stream Disc</Text>
+          <Text style={styles.subtitle}>studio</Text>
         </View>
 
-        {/* Title */}
-        <Text style={styles.title}>Welcome to</Text>
-        <Text style={styles.title}>Creative Freedom</Text>
+        {/* Premium/Auth CTA Button */}
+        <TouchableOpacity 
+          style={styles.premiumButton}
+          onPress={handlePremiumUpgrade}
+          activeOpacity={0.5}
+        >
+          <View style={styles.premiumContent}>
+            <Ionicons 
+              name={hasAccount ? "diamond-outline" : "person-outline"} 
+              size={20} 
+              color="#FFFFFF" 
+            />
+            <View style={styles.premiumTextContainer}>
+              <Text style={styles.premiumTitle}>
+                {!hasAccount ? 'Sign In / Sign Up' : isPremium ? 'Premium Active' : 'Upgrade to Premium'}
+              </Text>
+              <Text style={styles.premiumSubtitle}>
+                {!hasAccount ? 'Save your work and unlock all features' : isPremium ? 'All content types unlocked' : 'Unlock all content types'}
+              </Text>
+            </View>
+            {!isPremium && (
+              <Ionicons name="chevron-forward" size={20} color="#9A9A9A" />
+            )}
+          </View>
+        </TouchableOpacity>
 
-        {/* Content Type Cards */}
-        <View style={styles.cardsContainer}>
-          {contentTypes.map((type) => (
-            <TouchableOpacity
-              key={type.id}
-              onPress={() => handleCardPress(type.route, type.id)}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={type.gradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.card}
+        {/* Scrollable Content Type Cards */}
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.cardsContainer}>
+            {contentTypes.map((type) => (
+              <TouchableOpacity
+                key={type.id}
+                onPress={() => handleCardPress(type.route, type.id, type.locked)}
+                activeOpacity={0.8}
               >
-                <Text style={styles.cardTitle}>{type.title}</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Bottom Text */}
-        <View style={styles.bottomTextContainer}>
-          <Text style={styles.bottomTitle}>
-            DIY content creation for Stream Discs
-          </Text>
-          <Text style={styles.bottomSubtitle}>
-            Create music, films, podcasts, or interactive experiences
-          </Text>
-        </View>
+                <LinearGradient
+                  colors={type.gradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={[styles.card, type.locked && styles.cardLocked]}
+                >
+                  {type.locked && (
+                    <View style={styles.lockBadge}>
+                      <Ionicons name="lock-closed-outline" size={20} color="#FFFFFF" />
+                    </View>
+                  )}
+                  <Text style={styles.cardTitle}>{type.title}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -116,67 +260,100 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    paddingTop: 8,
-    paddingBottom: 16,
-  },
-  closeButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
     alignItems: 'center',
-  },
-  closeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '300',
+    marginBottom: 20,
+    paddingHorizontal: 16,
   },
   title: {
-    fontSize: 42,
-    fontWeight: 'bold',
+    fontSize: 40,
+    fontWeight: '600',
     color: '#FFFFFF',
-    lineHeight: 48,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#9A9A9A',
+    marginTop: 4,
+    letterSpacing: 2,
+    textTransform: 'lowercase',
+    fontWeight: '400',
+  },
+  premiumButton: {
+    marginHorizontal: 16,
+    marginBottom: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    overflow: 'hidden',
+  },
+  premiumContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  premiumTextContainer: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  premiumTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    letterSpacing: -0.2,
+    marginBottom: 2,
+  },
+  premiumSubtitle: {
+    fontSize: 12,
+    color: '#9A9A9A',
+    fontWeight: '400',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 32,
   },
   cardsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 32,
-    gap: 16,
+    gap: 12,
   },
   card: {
     width: cardWidth,
     height: cardWidth * 0.75,
-    borderRadius: 16,
+    borderRadius: 12,
     justifyContent: 'flex-end',
-    padding: 16,
+    padding: 12,
     marginBottom: 0,
+    position: 'relative',
+  },
+  cardLocked: {
+    opacity: 0.5,
+  },
+  lockBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   cardTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  bottomTextContainer: {
-    position: 'absolute',
-    bottom: 32,
-    left: 16,
-    right: 16,
-  },
-  bottomTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: '#FFFFFF',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  bottomSubtitle: {
-    fontSize: 14,
-    color: '#999999',
-    textAlign: 'center',
+    letterSpacing: -0.3,
   },
 });
 

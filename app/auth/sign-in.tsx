@@ -187,6 +187,17 @@ export default function SignInScreen() {
               <Text style={styles.signUpLink}>Sign Up</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Stream Disc Store Button */}
+          <TouchableOpacity
+            style={styles.storeButton}
+            onPress={() => router.push('/store')}
+            activeOpacity={0.5}
+          >
+            <Ionicons name="storefront-outline" size={18} color="#9A9A9A" />
+            <Text style={styles.storeButtonText}>Visit Stream Disc Store</Text>
+            <Ionicons name="chevron-forward" size={18} color="#9A9A9A" />
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -336,6 +347,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 24,
   },
   signUpText: {
     color: '#9A9A9A',
@@ -346,6 +358,23 @@ const styles = StyleSheet.create({
     color: '#06FFA5',
     fontSize: 14,
     fontWeight: '600',
+  },
+  storeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingVertical: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 20,
+  },
+  storeButtonText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#9A9A9A',
   },
 });
 

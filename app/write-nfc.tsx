@@ -76,7 +76,7 @@ export default function WriteNfcScreen() {
         // Create mock NFC data
         const mockDiscUID = verification.discData?.uid || `DEV-${Date.now()}`;
         const mockNonce = Math.random().toString(36).substring(7);
-        const mockUrl = `https://app.streamdisc.com/a/${contentId}?d=${mockDiscUID}&n=${mockNonce}`;
+        const mockUrl = `https://stream-disc.web.app/a/${contentId}?d=${mockDiscUID}&n=${mockNonce}`;
         
         // Update Firestore
         await firestoreService.updateNfcInfo(contentId, mockUrl, mockDiscUID, mockNonce);
@@ -119,7 +119,7 @@ export default function WriteNfcScreen() {
       
       const discUID = verification.discData!.uid;
       const nonce = Math.random().toString(36).substring(7);
-      const url = `https://app.streamdisc.com/a/${contentId}?d=${discUID}&n=${nonce}`;
+      const url = `https://stream-disc.web.app/a/${contentId}?d=${discUID}&n=${nonce}`;
 
       // Write to NFC using the existing nfcService method
       await nfcService.writeUrl(url);

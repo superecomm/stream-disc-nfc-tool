@@ -20,6 +20,8 @@ import { authService } from '../src/services/auth';
 import { storageService } from '../src/services/storage';
 import { firestoreService } from '../src/services/firestore';
 import { AdBanner } from '../src/components/AdBanner';
+import { NfcScanModal } from '../src/components/NfcScanModal';
+import { BottomNav } from '../src/components/BottomNav';
 
 interface AudioFile {
   uri: string;
@@ -40,6 +42,8 @@ export default function CreateAlbumScreen() {
   const [publishToStore, setPublishToStore] = useState(false);
   const [storePrice, setStorePrice] = useState('');
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showNfcModal, setShowNfcModal] = useState(false);
+  const [createdDiscId, setCreatedDiscId] = useState<string | null>(null);
 
   React.useEffect(() => {
     async function checkPremiumStatus() {
@@ -239,16 +243,25 @@ export default function CreateAlbumScreen() {
         await firestoreService.updateStorageUsage(userId, totalSize);
       }
 
-      // Navigate to NFC writing screen
-      router.push({
-        pathname: '/write-nfc',
-        params: { contentId: discId },
-      });
+      // Store the disc ID and show NFC modal
+      setCreatedDiscId(discId);
+      setShowNfcModal(true);
     } catch (error) {
       console.error('Error creating album:', error);
       Alert.alert('Error', 'Failed to create album. Please try again.');
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleNfcScanComplete = () => {
+    setShowNfcModal(false);
+    if (createdDiscId) {
+      // Navigate to write-nfc screen with the disc ID
+      router.push({
+        pathname: '/write-nfc',
+        params: { contentId: createdDiscId },
+      });
     }
   };
 
@@ -433,21 +446,14 @@ export default function CreateAlbumScreen() {
         {/* Ad Banner */}
         <AdBanner />
 
-        {/* Burn Button */}
+        {/* Save Draft Button */}
         <TouchableOpacity
-          style={[styles.burnButton, isUploading && styles.burnButtonDisabled]}
-          onPress={handleCreateAlbum}
-          disabled={isUploading}
+          style={styles.saveDraftButton}
+          onPress={() => Alert.alert('Save Draft', 'Draft saved successfully!')}
           activeOpacity={0.5}
         >
-          {isUploading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <>
-              <Ionicons name="flame" size={18} color="#FFFFFF" />
-              <Text style={styles.burnButtonText}>Burn to Stream Disc</Text>
-            </>
-          )}
+          <Ionicons name="bookmark-outline" size={18} color="#9A9A9A" />
+          <Text style={styles.saveDraftText}>Save as Draft</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -504,6 +510,20 @@ export default function CreateAlbumScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* NFC Scan Modal */}
+      <NfcScanModal
+        visible={showNfcModal}
+        onClose={() => setShowNfcModal(false)}
+        onScan={handleNfcScanComplete}
+        mode="write"
+      />
+
+      {/* Bottom Navigation */}
+      <BottomNav
+        onBurnPress={handleCreateAlbum}
+        isScanning={showNfcModal || isUploading}
+      />
     </SafeAreaView>
   );
 }
@@ -518,7 +538,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   header: {
     flexDirection: 'row',
@@ -689,23 +709,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  burnButton: {
-    backgroundColor: '#FF3B30',
+  saveDraftButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     paddingVertical: 14,
     borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 20,
   },
-  burnButtonDisabled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  burnButtonText: {
-    color: '#FFFFFF',
+  saveDraftText: {
+    color: '#9A9A9A',
     fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: -0.2,
+    fontWeight: '500',
   },
   publishToggle: {
     marginBottom: 20,

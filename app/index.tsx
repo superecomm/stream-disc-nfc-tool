@@ -14,6 +14,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { authService } from '../src/services/auth';
 import { AdBanner } from '../src/components/AdBanner';
+import { NfcScanModal } from '../src/components/NfcScanModal';
+import { BottomNav } from '../src/components/BottomNav';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 48) / 2;
@@ -116,16 +118,25 @@ export default function HomeScreen() {
   const router = useRouter();
   const [hasAccount, setHasAccount] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
+  const [showNfcModal, setShowNfcModal] = useState(false);
 
   useEffect(() => {
     checkUserStatus();
+    
+    // Show NFC modal on first launch (delayed)
+    const timer = setTimeout(() => {
+      setShowNfcModal(true);
+    }, 1000);
     
     // Listen for auth state changes
     const unsubscribe = authService.onAuthStateChange(() => {
       checkUserStatus();
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(timer);
+      unsubscribe();
+    };
   }, []);
 
   const checkUserStatus = async () => {
@@ -189,61 +200,7 @@ export default function HomeScreen() {
             <Text style={styles.title}>Stream Disc</Text>
             <Text style={styles.subtitle}>studio</Text>
           </View>
-          <TouchableOpacity
-            style={styles.dashboardButton}
-            onPress={() => router.push('/dashboard')}
-            activeOpacity={0.5}
-          >
-            <Ionicons name="person-circle-outline" size={32} color="#FFFFFF" />
-          </TouchableOpacity>
         </View>
-
-        {/* Premium/Auth CTA Button */}
-        <TouchableOpacity 
-          style={styles.premiumButton}
-          onPress={handlePremiumUpgrade}
-          activeOpacity={0.5}
-        >
-          <View style={styles.premiumContent}>
-            <Ionicons 
-              name={hasAccount ? "diamond-outline" : "person-outline"} 
-              size={20} 
-              color="#FFFFFF" 
-            />
-            <View style={styles.premiumTextContainer}>
-              <Text style={styles.premiumTitle}>
-                {!hasAccount ? 'Sign In / Sign Up' : isPremium ? 'Premium Active' : 'Upgrade to Premium'}
-              </Text>
-              <Text style={styles.premiumSubtitle}>
-                {!hasAccount ? 'Save your work and unlock all features' : isPremium ? 'All content types unlocked' : 'Unlock all content types'}
-              </Text>
-            </View>
-            {!isPremium && (
-              <Ionicons name="chevron-forward" size={20} color="#9A9A9A" />
-            )}
-          </View>
-        </TouchableOpacity>
-
-        {/* Ad Banner */}
-        <AdBanner />
-
-        {/* Store Button */}
-        <TouchableOpacity
-          style={styles.storeButton}
-          onPress={() => router.push('/store')}
-          activeOpacity={0.5}
-        >
-          <View style={styles.storeContent}>
-            <View style={styles.storeIconContainer}>
-              <Ionicons name="storefront-outline" size={20} color="#FFFFFF" />
-            </View>
-            <View style={styles.storeTextContainer}>
-              <Text style={styles.storeTitle}>Stream Disc Store</Text>
-              <Text style={styles.storeSubtitle}>Browse and buy physical discs</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#9A9A9A" />
-          </View>
-        </TouchableOpacity>
 
         {/* Scrollable Content Type Cards */}
         <ScrollView 
@@ -276,6 +233,19 @@ export default function HomeScreen() {
           </View>
         </ScrollView>
       </View>
+
+      {/* NFC Scan Modal */}
+      <NfcScanModal
+        visible={showNfcModal}
+        onClose={() => setShowNfcModal(false)}
+        mode="read"
+      />
+
+      {/* Bottom Navigation */}
+      <BottomNav
+        onBurnPress={() => setShowNfcModal(true)}
+        isScanning={showNfcModal}
+      />
     </SafeAreaView>
   );
 }
@@ -292,7 +262,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     marginBottom: 20,
     paddingHorizontal: 16,
   },
@@ -313,88 +283,12 @@ const styles = StyleSheet.create({
     textTransform: 'lowercase',
     fontWeight: '400',
   },
-  dashboardButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  premiumButton: {
-    marginHorizontal: 16,
-    marginBottom: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    overflow: 'hidden',
-  },
-  premiumContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-  },
-  premiumTextContainer: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  premiumTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    letterSpacing: -0.2,
-    marginBottom: 2,
-  },
-  premiumSubtitle: {
-    fontSize: 12,
-    color: '#9A9A9A',
-    fontWeight: '400',
-  },
-  storeButton: {
-    marginHorizontal: 16,
-    marginBottom: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    overflow: 'hidden',
-  },
-  storeContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-  },
-  storeIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  storeTextContainer: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  storeTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    letterSpacing: -0.2,
-    marginBottom: 2,
-  },
-  storeSubtitle: {
-    fontSize: 12,
-    color: '#9A9A9A',
-    fontWeight: '400',
-  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   cardsContainer: {
     flexDirection: 'row',

@@ -7,7 +7,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "scheme": "streamdisc",
+    "scheme": "streamdiscplayer",
     "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -21,7 +21,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.streamdisc.nfctool",
       "associatedDomains": [
-        "applinks:app.streamdisc.com"
+        "applinks:stream-disc.web.app",
+        "applinks:app.streamdiscplayer.com"
       ],
       "infoPlist": {
         "NFCReaderUsageDescription": "This app uses NFC to program Stream Discs with your content"
@@ -46,7 +47,11 @@
           "data": [
             {
               "scheme": "https",
-              "host": "app.streamdisc.com"
+              "host": "stream-disc.web.app"
+            },
+            {
+              "scheme": "https",
+              "host": "app.streamdiscplayer.com"
             }
           ],
           "category": [

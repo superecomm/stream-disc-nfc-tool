@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Stream Disc Player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+    .loader {
+      width: 50px;
+      height: 50px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: #06FFA5;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .disc-icon {
+      font-size: 80px;
+      margin-bottom: 20px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+    h1 { font-size: 24px; margin-bottom: 10px; font-weight: 700; }
+    p { color: #999; font-size: 14px; margin-bottom: 30px; }
+    .button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 12px 24px;
+      background: #06FFA5;
+      color: #000;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: transform 0.2s;
+    }
+    .button:hover {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <div class="disc-icon">💿</div>
+    <div class="loader"></div>
+    <h1>Opening Stream Disc...</h1>
+    <p id="message">Launching app...</p>
+    <a href="#" id="fallback" class="button" style="display:none;">Get the App</a>
+  </div>
+
+  <script>
+    // Get content ID and parameters from URL
+    const pathParts = window.location.pathname.split('/');
+    const contentId = pathParts[2] || '';
+    const params = window.location.search;
+    
+    // Build deep link URL
+    const deepLink = `streamdiscplayer://album/${contentId}${params}`;
+    
+    console.log('Redirecting to:', deepLink);
+    
+    // Try to open in app
+    window.location.href = deepLink;
+    
+    // Fallback after 2 seconds
+    setTimeout(() => {
+      document.getElementById('message').textContent = "Don't have the app yet?";
+      const fallbackBtn = document.getElementById('fallback');
+      fallbackBtn.style.display = 'inline-block';
+      
+      // Detect platform and set appropriate store link
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      
+      if (isAndroid) {
+        fallbackBtn.textContent = 'Download on Google Play';
+        fallbackBtn.href = 'https://play.google.com/store/apps/details?id=com.streamdisc.app';
+      } else if (isIOS) {
+        fallbackBtn.textContent = 'Download on App Store';
+        fallbackBtn.href = 'https://apps.apple.com/app/stream-disc-studio/id123456789';
+      } else {
+        fallbackBtn.textContent = 'Visit Website';
+        fallbackBtn.href = 'https://www.streamdiscplayer.com';
+      }
+    }, 2000);
+    
+    // Redirect to homepage after 5 seconds if still on page
+    setTimeout(() => {
+      if (document.visibilityState === 'visible') {
+        window.location.href = 'https://www.streamdiscplayer.com';
+      }
+    }, 5000);
+  </script>
+</body>
+</html>
+

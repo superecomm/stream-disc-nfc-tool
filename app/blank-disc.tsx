@@ -85,7 +85,7 @@ export default function BlankDiscScreen() {
         {/* Message */}
         <Text style={styles.message}>
           {fromDeepLink
-            ? 'You've discovered a blank Stream Disc! Download the app to program this disc with your favorite music, photos, videos, and more.'
+            ? "You've discovered a blank Stream Disc! Download the app to program this disc with your favorite music, photos, videos, and more."
             : 'This is a blank Stream Disc ready to be programmed with your content.'}
         </Text>
 

@@ -14,7 +14,32 @@ Your Studio app is now ready for integration into your main Stream Disc Player a
 
 ### **Documentation Files:**
 
-1. **MIGRATION.md** (Main Guide)
+1. **README_MIGRATION.md** (This File - Overview)
+   - Complete overview of migration package
+   - Quick start guide
+   - Key features and files
+   - Integration checklist
+
+2. **MAIN_APP_INTEGRATION.md** ⚠️ **CRITICAL!**
+   - Main app-specific requirements
+   - Navigation conflict resolution
+   - Firebase collection mapping
+   - Fire logo implementation
+   - Plus button integration
+
+3. **VISUAL_INTEGRATION_GUIDE.md** (Visual Guide)
+   - Flow diagrams and component mapping
+   - Before/After comparisons
+   - UI element changes
+   - Testing checklist
+
+4. **INTEGRATION_PROMPT.md** (Quick Start)
+   - Ready-to-use Cursor Agent prompt
+   - Step-by-step usage instructions
+   - Resources and tips
+   - Fallback options
+
+5. **MIGRATION.md** (Main Guide)
    - Complete step-by-step integration instructions
    - File copy checklist
    - Configuration merge guide
@@ -22,20 +47,14 @@ Your Studio app is now ready for integration into your main Stream Disc Player a
    - Testing procedures
    - Troubleshooting tips
 
-2. **STUDIO_FILES_MANIFEST.md** (File Reference)
+6. **STUDIO_FILES_MANIFEST.md** (File Reference)
    - Complete directory structure
    - Detailed description of every file
    - Dependencies list
    - Style consistency guidelines
    - Verification checklist
 
-3. **INTEGRATION_PROMPT.md** (Quick Start)
-   - Ready-to-use Cursor Agent prompt
-   - Step-by-step usage instructions
-   - Resources and tips
-   - Fallback options
-
-4. **DEVELOPMENT_GUIDE.md** (Technical Reference)
+7. **DEVELOPMENT_GUIDE.md** (Technical Reference)
    - Firebase project info
    - NFC scan data collection
    - Build procedures

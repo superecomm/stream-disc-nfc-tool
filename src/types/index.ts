@@ -12,6 +12,7 @@ export interface Disc {
   type: ContentType;
   title: string;
   artist: string;
+  description?: string;
   coverImage: string; // Firebase Storage URL
   tracks?: Track[]; // For album/mixtape
   createdBy: string | null; // userId or null for anonymous
@@ -20,6 +21,11 @@ export interface Disc {
   discUID?: string;
   nonce?: string;
   metadata?: Record<string, any>;
+  // Store-related fields
+  publishedToStore?: boolean;
+  storePrice?: number | null; // null or 0 means free
+  physicalDiscAvailable?: boolean;
+  publishedAt?: Date | null;
 }
 
 export interface UploadProgress {

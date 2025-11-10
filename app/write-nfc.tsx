@@ -10,8 +10,10 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { nfcService } from '../src/services/nfc';
 import { firestoreService } from '../src/services/firestore';
+import { nfcVerificationService } from '../src/services/nfcVerification';
 
 export default function WriteNfcScreen() {
   const router = useRouter();
@@ -52,21 +54,35 @@ export default function WriteNfcScreen() {
     setIsWriting(false);
 
     try {
-      // In dev mode, simulate successful NFC write
+      // In dev mode, simulate successful verification and write
       if (!nfcSupported) {
-        setIsWriting(true);
-        console.log('DEV MODE: Simulating NFC write for content:', contentId);
+        console.log('DEV MODE: Simulating NFC verification and write for content:', contentId);
         
+        // Simulate verification
+        const verification = await nfcVerificationService.simulateScanAndVerify(true);
+        
+        if (!verification.isValid) {
+          Alert.alert('Not a Stream Disc', verification.message);
+          setIsScanning(false);
+          return;
+        }
+
+        Alert.alert('Verified!', `${verification.message}\nSerial: ${verification.serialNumber}`);
+        
+        setIsWriting(true);
         // Simulate write delay
         await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Create mock NFC data
-        const mockDiscUID = `DEV-${Date.now()}`;
+        const mockDiscUID = verification.discData?.uid || `DEV-${Date.now()}`;
         const mockNonce = Math.random().toString(36).substring(7);
         const mockUrl = `https://app.streamdisc.com/a/${contentId}?d=${mockDiscUID}&n=${mockNonce}`;
         
         // Update Firestore
         await firestoreService.updateNfcInfo(contentId, mockUrl, mockDiscUID, mockNonce);
+        
+        // Update disc programming status
+        await firestoreService.updateDiscProgrammingStatus(mockDiscUID, true);
         
         // Navigate to success
         router.push({
@@ -76,6 +92,7 @@ export default function WriteNfcScreen() {
         return;
       }
 
+      // Real NFC flow with verification
       // Check if NFC is enabled
       const isEnabled = await nfcService.isEnabled();
       if (!isEnabled) {
@@ -88,16 +105,30 @@ export default function WriteNfcScreen() {
         return;
       }
 
-      // Write to NFC tag
-      const { discUID, nonce, url } = await nfcService.writeToNfc(
-        contentId,
-        () => {
-          setIsWriting(true);
-        }
-      );
+      // Step 1: Scan and verify the disc
+      const verification = await nfcVerificationService.scanAndVerify();
+      
+      if (!verification.isValid) {
+        // Not a valid Stream Disc - stop here
+        setIsScanning(false);
+        return;
+      }
 
-      // Update Firestore with NFC information
+      // Step 2: Write content to the verified disc
+      setIsWriting(true);
+      
+      const discUID = verification.discData!.uid;
+      const nonce = Math.random().toString(36).substring(7);
+      const url = `https://app.streamdisc.com/a/${contentId}?d=${discUID}&n=${nonce}`;
+
+      // Write to NFC using the existing nfcService method
+      await nfcService.writeUrl(url);
+
+      // Update Firestore
       await firestoreService.updateNfcInfo(contentId, url, discUID, nonce);
+      
+      // Mark disc as programmed
+      await firestoreService.updateDiscProgrammingStatus(discUID, true);
 
       // Navigate to success screen
       router.push({

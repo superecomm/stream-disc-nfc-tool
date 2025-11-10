@@ -8,9 +8,15 @@ import {
   updateProfile,
   linkWithCredential,
   EmailAuthProvider,
+  GoogleAuthProvider,
+  OAuthProvider,
+  signInWithPopup,
+  signInWithCredential,
+  sendPasswordResetEmail as firebaseSendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { firestoreService } from './firestore';
+import { Alert } from 'react-native';
 
 class AuthService {
   private currentUser: User | null = null;
@@ -192,6 +198,77 @@ class AuthService {
       return false;
     }
     return await firestoreService.isUserPremium(this.currentUser.uid);
+  }
+
+  /**
+   * Sign in with Google
+   */
+  async signInWithGoogle(): Promise<User> {
+    try {
+      // Note: For React Native, you'll need to use @react-native-google-signin/google-signin
+      // This is a placeholder for web or will need platform-specific implementation
+      Alert.alert(
+        'Google Sign-In',
+        'Google Sign-In requires additional setup. This will be implemented with @react-native-google-signin/google-signin package.'
+      );
+      throw new Error('Google Sign-In not yet implemented');
+      
+      // Future implementation:
+      // const provider = new GoogleAuthProvider();
+      // const userCredential = await signInWithPopup(auth, provider);
+      // await this.handleSocialSignIn(userCredential.user);
+      // return userCredential.user;
+    } catch (error) {
+      console.error('Error signing in with Google:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Sign in with Apple
+   */
+  async signInWithApple(): Promise<User> {
+    try {
+      // Note: For React Native, you'll need to use expo-apple-authentication
+      // This is a placeholder that will need platform-specific implementation
+      Alert.alert(
+        'Apple Sign-In',
+        'Apple Sign-In requires additional setup. This will be implemented with expo-apple-authentication package.'
+      );
+      throw new Error('Apple Sign-In not yet implemented');
+      
+      // Future implementation:
+      // const provider = new OAuthProvider('apple.com');
+      // const userCredential = await signInWithPopup(auth, provider);
+      // await this.handleSocialSignIn(userCredential.user);
+      // return userCredential.user;
+    } catch (error) {
+      console.error('Error signing in with Apple:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Handle social sign-in (Google/Apple) user profile creation
+   */
+  private async handleSocialSignIn(user: User): Promise<void> {
+    await firestoreService.createUserProfile(user.uid, {
+      email: user.email || undefined,
+      displayName: user.displayName || undefined,
+      photoURL: user.photoURL || undefined,
+    });
+  }
+
+  /**
+   * Send password reset email
+   */
+  async sendPasswordResetEmail(email: string): Promise<void> {
+    try {
+      await firebaseSendPasswordResetEmail(auth, email);
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      throw error;
+    }
   }
 }
 

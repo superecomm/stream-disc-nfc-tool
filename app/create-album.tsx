@@ -10,13 +10,16 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import { Ionicons } from '@expo/vector-icons';
 import { authService } from '../src/services/auth';
 import { storageService } from '../src/services/storage';
 import { firestoreService } from '../src/services/firestore';
+import { AdBanner } from '../src/components/AdBanner';
 
 interface AudioFile {
   uri: string;
@@ -28,10 +31,57 @@ export default function CreateAlbumScreen() {
   const router = useRouter();
   const [albumTitle, setAlbumTitle] = useState('');
   const [artistName, setArtistName] = useState('');
+  const [description, setDescription] = useState('');
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
+  const [isPremium, setIsPremium] = useState(false);
+  const [publishToStore, setPublishToStore] = useState(false);
+  const [storePrice, setStorePrice] = useState('');
+  const [showPublishModal, setShowPublishModal] = useState(false);
+
+  React.useEffect(() => {
+    async function checkPremiumStatus() {
+      const premium = await authService.isPremium();
+      setIsPremium(premium);
+    }
+    checkPremiumStatus();
+  }, []);
+
+  // Helper function to get approximate file size
+  const getApproximateFileSize = async (uri: string): Promise<number> => {
+    try {
+      // For images, estimate based on URI (actual size would require native module)
+      // Rough estimate: assume average compressed image is 1-2MB
+      return 1500000; // 1.5MB estimate
+    } catch (error) {
+      console.error('Error getting file size:', error);
+      return 1000000; // 1MB default estimate
+    }
+  };
+
+  const checkStorageAvailability = async (fileSize: number): Promise<boolean> => {
+    const userId = authService.getCurrentUserId();
+    if (!userId) {
+      // Anonymous users can proceed (no limits enforced)
+      return true;
+    }
+
+    const hasSpace = await firestoreService.hasAvailableStorage(userId, fileSize);
+    if (!hasSpace) {
+      Alert.alert(
+        'Storage Limit Reached',
+        'You have reached your storage limit. Please upgrade your plan or delete some discs to free up space.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Upgrade', onPress: () => router.push('/subscription') },
+        ]
+      );
+      return false;
+    }
+    return true;
+  };
 
   const pickCoverImage = async () => {
     try {
@@ -43,7 +93,16 @@ export default function CreateAlbumScreen() {
       });
 
       if (!result.canceled && result.assets[0]) {
-        setCoverImage(result.assets[0].uri);
+        const imageUri = result.assets[0].uri;
+        const estimatedSize = await getApproximateFileSize(imageUri);
+        
+        // Check storage availability
+        const hasSpace = await checkStorageAvailability(estimatedSize);
+        if (!hasSpace) {
+          return;
+        }
+        
+        setCoverImage(imageUri);
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -60,6 +119,15 @@ export default function CreateAlbumScreen() {
       });
 
       if (!result.canceled && result.assets) {
+        // Calculate total size of new files
+        const totalNewSize = result.assets.reduce((sum, asset) => sum + (asset.size || 0), 0);
+        
+        // Check storage availability
+        const hasSpace = await checkStorageAvailability(totalNewSize);
+        if (!hasSpace) {
+          return;
+        }
+        
         const newFiles = result.assets.map((asset) => ({
           uri: asset.uri,
           name: asset.name,
@@ -75,6 +143,21 @@ export default function CreateAlbumScreen() {
 
   const removeAudioFile = (index: number) => {
     setAudioFiles(audioFiles.filter((_, i) => i !== index));
+  };
+
+  const handleVideoPress = () => {
+    if (!isPremium) {
+      Alert.alert(
+        'Premium Feature',
+        'Video support is available for premium users. Upgrade to unlock this feature.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Upgrade', onPress: () => router.push('/') }
+        ]
+      );
+    } else {
+      Alert.alert('Coming Soon', 'Video support coming soon!');
+    }
   };
 
   const handleCreateAlbum = async () => {
@@ -138,10 +221,23 @@ export default function CreateAlbumScreen() {
         type: 'album',
         title: albumTitle,
         artist: artistName,
+        description: description,
         coverImage: coverImageUrl,
         tracks: trackUrls,
         createdBy: userId,
+        publishedToStore: publishToStore,
+        storePrice: publishToStore ? parseFloat(storePrice) || 0 : null,
+        physicalDiscAvailable: publishToStore,
       });
+
+      // Update storage usage for the user
+      if (userId !== 'anonymous') {
+        const coverImageSize = await getApproximateFileSize(coverImage);
+        const audioFilesSize = audioFiles.reduce((sum, file) => sum + (file.size || 0), 0);
+        const totalSize = coverImageSize + audioFilesSize;
+        
+        await firestoreService.updateStorageUsage(userId, totalSize);
+      }
 
       // Navigate to NFC writing screen
       router.push({
@@ -162,18 +258,12 @@ export default function CreateAlbumScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>←</Text>
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Create Album</Text>
-          <View style={styles.headerIcons}>
+          <View style={styles.headerRight}>
             <TouchableOpacity style={styles.iconButton}>
-              <Text style={styles.iconText}>👁</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton}>
-              <Text style={styles.iconText}>💾</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton}>
-              <Text style={styles.iconText}>🔥</Text>
+              <Ionicons name="save-outline" size={20} color="#9A9A9A" />
             </TouchableOpacity>
           </View>
         </View>
@@ -184,17 +274,15 @@ export default function CreateAlbumScreen() {
             <Image source={{ uri: coverImage }} style={styles.coverImage} />
           ) : (
             <View style={styles.imagePlaceholder}>
-              <Text style={styles.imagePlaceholderText}>+ Add Cover Art</Text>
+              <Ionicons name="image-outline" size={48} color="#9A9A9A" />
+              <Text style={styles.imagePlaceholderText}>Add Cover Art</Text>
             </View>
           )}
         </TouchableOpacity>
 
         {/* Album Title Input */}
         <View style={styles.inputContainer}>
-          <View style={styles.inputHeader}>
-            <Text style={styles.dragIcon}>⋮⋮</Text>
-            <Text style={styles.inputLabel}>ALBUM TITLE</Text>
-          </View>
+          <Text style={styles.inputLabel}>ALBUM TITLE</Text>
           <TextInput
             style={styles.input}
             placeholder="Enter album title"
@@ -207,10 +295,7 @@ export default function CreateAlbumScreen() {
 
         {/* Artist Name Input */}
         <View style={styles.inputContainer}>
-          <View style={styles.inputHeader}>
-            <Text style={styles.dragIcon}>⋮⋮</Text>
-            <Text style={styles.inputLabel}>ARTIST NAME</Text>
-          </View>
+          <Text style={styles.inputLabel}>ARTIST NAME</Text>
           <TextInput
             style={styles.input}
             placeholder="Enter artist name"
@@ -221,64 +306,204 @@ export default function CreateAlbumScreen() {
           />
         </View>
 
-        {/* Audio Files Section */}
-        <View style={styles.audioSection}>
-          <Text style={styles.sectionTitle}>Tap buttons below to add content</Text>
-
-          {audioFiles.map((file, index) => (
-            <View key={index} style={styles.audioFileItem}>
-              <Text style={styles.audioFileName} numberOfLines={1}>
-                {file.name}
-              </Text>
-              <TouchableOpacity onPress={() => removeAudioFile(index)}>
-                <Text style={styles.removeButton}>✕</Text>
-              </TouchableOpacity>
-              {uploadProgress[file.name] !== undefined && (
-                <View style={styles.progressBar}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      { width: `${uploadProgress[file.name]}%` },
-                    ]}
-                  />
-                </View>
-              )}
-            </View>
-          ))}
+        {/* Description Input */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>DESCRIPTION</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Add album description, story, or notes..."
+            placeholderTextColor="#666666"
+            value={description}
+            onChangeText={setDescription}
+            editable={!isUploading}
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+          />
         </View>
+
+        {/* Audio Files Section */}
+        {audioFiles.length > 0 && (
+          <View style={styles.audioSection}>
+            <Text style={styles.sectionTitle}>Tracks ({audioFiles.length})</Text>
+            {audioFiles.map((file, index) => (
+              <View key={index} style={styles.audioFileItem}>
+                <View style={styles.audioFileInfo}>
+                  <Ionicons name="musical-note" size={16} color="#9A9A9A" />
+                  <Text style={styles.audioFileName} numberOfLines={1}>
+                    {file.name}
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => removeAudioFile(index)}>
+                  <Ionicons name="close-circle" size={20} color="#9A9A9A" />
+                </TouchableOpacity>
+                {uploadProgress[file.name] !== undefined && (
+                  <View style={styles.progressBar}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        { width: `${uploadProgress[file.name]}%` },
+                      ]}
+                    />
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.actionButton} onPress={pickCoverImage}>
-            <Text style={styles.actionButtonText}>📷</Text>
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            onPress={pickAudioFiles}
+            activeOpacity={0.5}
+          >
+            <Ionicons name="musical-notes-outline" size={20} color="#FFFFFF" />
+            <Text style={styles.actionButtonText}>Tracks</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={pickCoverImage}>
-            <Text style={styles.actionButtonText}>🖼</Text>
+          
+          <TouchableOpacity 
+            style={[styles.actionButton, !isPremium && styles.actionButtonLocked]} 
+            onPress={handleVideoPress}
+            activeOpacity={0.5}
+          >
+            <View style={styles.buttonIconContainer}>
+              <Ionicons name="videocam-outline" size={20} color={isPremium ? "#FFFFFF" : "#9A9A9A"} />
+              {!isPremium && (
+                <View style={styles.lockIconBadge}>
+                  <Ionicons name="lock-closed" size={10} color="#FFFFFF" />
+                </View>
+              )}
+            </View>
+            <Text style={[styles.actionButtonText, !isPremium && styles.actionButtonTextLocked]}>Video</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={pickAudioFiles}>
-            <Text style={styles.actionButtonText}>🎵</Text>
+
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            onPress={pickCoverImage}
+            activeOpacity={0.5}
+          >
+            <Ionicons name="image-outline" size={20} color="#FFFFFF" />
+            <Text style={styles.actionButtonText}>Photo</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>T</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>🎤</Text>
+
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            onPress={() => Alert.alert('Add Text', 'Use the Description field above to add stories, poems, track notes, or any text content.')}
+            activeOpacity={0.5}
+          >
+            <Ionicons name="text-outline" size={20} color="#FFFFFF" />
+            <Text style={styles.actionButtonText}>Text</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Create Button */}
+        {/* Publish to Store Toggle (Premium Only) */}
+        {isPremium && (
+          <TouchableOpacity
+            style={styles.publishToggle}
+            onPress={() => {
+              if (!publishToStore) {
+                setShowPublishModal(true);
+              } else {
+                setPublishToStore(false);
+                setStorePrice('');
+              }
+            }}
+            activeOpacity={0.5}
+          >
+            <View style={styles.publishContent}>
+              <Ionicons
+                name={publishToStore ? 'checkbox' : 'square-outline'}
+                size={24}
+                color={publishToStore ? '#06FFA5' : '#9A9A9A'}
+              />
+              <View style={styles.publishTextContainer}>
+                <Text style={styles.publishTitle}>Publish to Stream Disc Store</Text>
+                <Text style={styles.publishSubtitle}>
+                  {publishToStore
+                    ? `Listed for ${storePrice ? `$${storePrice}` : 'Free'}`
+                    : 'Make your disc available for purchase'}
+                </Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {/* Ad Banner */}
+        <AdBanner />
+
+        {/* Burn Button */}
         <TouchableOpacity
-          style={[styles.createButton, isUploading && styles.createButtonDisabled]}
+          style={[styles.burnButton, isUploading && styles.burnButtonDisabled]}
           onPress={handleCreateAlbum}
           disabled={isUploading}
+          activeOpacity={0.5}
         >
           {isUploading ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.createButtonText}>Continue to Write NFC</Text>
+            <>
+              <Ionicons name="flame" size={20} color="#FFFFFF" />
+              <Text style={styles.burnButtonText}>Burn to Stream Disc</Text>
+            </>
           )}
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Publish Modal */}
+      <Modal
+        visible={showPublishModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPublishModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Publish to Store</Text>
+            <Text style={styles.modalDescription}>
+              Set a price for physical Stream Discs. Digital content will always be accessible to buyers.
+            </Text>
+
+            <View style={styles.modalInputContainer}>
+              <Text style={styles.modalInputLabel}>Price (USD)</Text>
+              <View style={styles.priceInputWrapper}>
+                <Text style={styles.dollarSign}>$</Text>
+                <TextInput
+                  style={styles.priceInput}
+                  placeholder="0.00"
+                  placeholderTextColor="#666666"
+                  keyboardType="decimal-pad"
+                  value={storePrice}
+                  onChangeText={setStorePrice}
+                />
+              </View>
+              <Text style={styles.modalHint}>Leave blank or 0 for free physical discs</Text>
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => {
+                  setShowPublishModal(false);
+                  setStorePrice('');
+                }}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalConfirmButton}
+                onPress={() => {
+                  setPublishToStore(true);
+                  setShowPublishModal(false);
+                }}
+              >
+                <Text style={styles.modalConfirmText}>Publish</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -300,40 +525,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 24,
+    paddingTop: 8,
   },
   backButton: {
     width: 40,
     height: 40,
     justifyContent: 'center',
-  },
-  backButtonText: {
-    fontSize: 28,
-    color: '#FFFFFF',
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
     color: '#FFFFFF',
+    letterSpacing: -0.3,
   },
-  headerIcons: {
+  headerRight: {
     flexDirection: 'row',
     gap: 8,
   },
   iconButton: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  iconText: {
-    fontSize: 20,
   },
   imageSection: {
     width: '100%',
     aspectRatio: 1,
     marginBottom: 24,
-    borderRadius: 8,
+    borderRadius: 12,
     overflow: 'hidden',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   coverImage: {
     width: '100%',
@@ -342,66 +566,74 @@ const styles = StyleSheet.create({
   imagePlaceholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#1a1a1a',
     justifyContent: 'center',
     alignItems: 'center',
   },
   imagePlaceholderText: {
-    color: '#666666',
-    fontSize: 16,
+    color: '#9A9A9A',
+    fontSize: 14,
+    marginTop: 12,
+    fontWeight: '400',
   },
   inputContainer: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 16,
     marginBottom: 16,
   },
-  inputHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  dragIcon: {
-    color: '#666666',
-    fontSize: 12,
-    marginRight: 8,
-  },
   inputLabel: {
-    color: '#999999',
-    fontSize: 12,
+    color: '#9A9A9A',
+    fontSize: 11,
     fontWeight: '600',
+    marginBottom: 8,
+    letterSpacing: 0.5,
   },
   input: {
     color: '#FFFFFF',
     fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    fontWeight: '400',
+  },
+  textArea: {
+    minHeight: 100,
+    paddingTop: 12,
   },
   audioSection: {
-    marginTop: 24,
+    marginTop: 8,
     marginBottom: 24,
   },
   sectionTitle: {
-    color: '#999999',
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 16,
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 12,
+    letterSpacing: -0.2,
   },
   audioFileItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
-    padding: 12,
-    borderRadius: 8,
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 10,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  audioFileInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 8,
   },
   audioFileName: {
     flex: 1,
     color: '#FFFFFF',
     fontSize: 14,
-  },
-  removeButton: {
-    color: '#FF006E',
-    fontSize: 18,
-    marginLeft: 8,
+    fontWeight: '400',
   },
   progressBar: {
     position: 'absolute',
@@ -409,7 +641,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 2,
-    backgroundColor: '#333333',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   progressFill: {
     height: '100%',
@@ -417,34 +649,189 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
+    gap: 8,
     marginBottom: 24,
   },
   actionButton: {
-    width: 56,
-    height: 56,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 28,
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingVertical: 16,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  actionButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#FFFFFF',
+  },
+  actionButtonLocked: {
+    opacity: 0.5,
+  },
+  actionButtonTextLocked: {
+    color: '#9A9A9A',
+  },
+  buttonIconContainer: {
+    position: 'relative',
+  },
+  lockIconBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#FF3B30',
+    borderRadius: 8,
+    width: 16,
+    height: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  actionButtonText: {
-    fontSize: 24,
+  burnButton: {
+    backgroundColor: '#FF3B30',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 10,
   },
-  createButton: {
-    backgroundColor: '#06FFA5',
-    padding: 16,
+  burnButtonDisabled: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  burnButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  publishToggle: {
+    marginBottom: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    overflow: 'hidden',
+  },
+  publishContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 12,
+  },
+  publishTextContainer: {
+    flex: 1,
+  },
+  publishTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 2,
+    letterSpacing: -0.2,
+  },
+  publishSubtitle: {
+    fontSize: 12,
+    color: '#9A9A9A',
+    fontWeight: '400',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    letterSpacing: -0.3,
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: '#9A9A9A',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  modalInputContainer: {
+    marginBottom: 24,
+  },
+  modalInputLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#9A9A9A',
+    marginBottom: 8,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  priceInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 16,
+  },
+  dollarSign: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#06FFA5',
+    marginRight: 8,
+  },
+  priceInput: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 16,
+    paddingVertical: 12,
+    fontWeight: '400',
+  },
+  modalHint: {
+    fontSize: 11,
+    color: '#666666',
+    marginTop: 6,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalCancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
   },
-  createButtonDisabled: {
-    backgroundColor: '#333333',
-  },
-  createButtonText: {
-    color: '#000000',
-    fontSize: 16,
+  modalCancelText: {
+    fontSize: 15,
     fontWeight: '600',
+    color: '#9A9A9A',
+  },
+  modalConfirmButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    backgroundColor: '#06FFA5',
+    alignItems: 'center',
+  },
+  modalConfirmText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#000000',
   },
 });
 

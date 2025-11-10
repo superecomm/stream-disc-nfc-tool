@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { authService } from '../src/services/auth';
+import { AdBanner } from '../src/components/AdBanner';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 48) / 2;
@@ -30,7 +31,7 @@ const contentTypes = [
     title: 'Mixtape',
     gradient: ['#FFBE0B', '#06FFA5'],
     route: '/create-album',
-    locked: false,
+    locked: true, // Locked until after album flow is complete
   },
   {
     id: 'film',
@@ -50,6 +51,13 @@ const contentTypes = [
     id: 'audiobook',
     title: 'Audiobook',
     gradient: ['#FB5607', '#06FFA5'],
+    route: '/create-album',
+    locked: true,
+  },
+  {
+    id: 'digitalart',
+    title: 'Digital Art',
+    gradient: ['#FF006E', '#FFBA08'],
     route: '/create-album',
     locked: true,
   },
@@ -160,27 +168,16 @@ export default function HomeScreen() {
       );
     } else if (!isPremium) {
       // Show premium upgrade
-      Alert.alert(
-        'Upgrade to Premium',
-        'Unlock all content types and create unlimited Stream Discs.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Upgrade', onPress: () => console.log('Navigate to subscription') },
-        ]
-      );
+      router.push('/subscription');
     }
   };
 
   const handleSignIn = () => {
-    // TODO: Navigate to sign in screen
-    console.log('Navigate to sign in');
-    Alert.alert('Sign In', 'Sign in screen coming soon!');
+    router.push('/auth/sign-in');
   };
 
   const handleSignUp = () => {
-    // TODO: Navigate to sign up screen
-    console.log('Navigate to sign up');
-    Alert.alert('Sign Up', 'Sign up screen coming soon!');
+    router.push('/auth/sign-up');
   };
 
   return (
@@ -188,8 +185,17 @@ export default function HomeScreen() {
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Stream Disc</Text>
-          <Text style={styles.subtitle}>studio</Text>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>Stream Disc</Text>
+            <Text style={styles.subtitle}>studio</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.dashboardButton}
+            onPress={() => router.push('/dashboard')}
+            activeOpacity={0.5}
+          >
+            <Ionicons name="person-circle-outline" size={32} color="#FFFFFF" />
+          </TouchableOpacity>
         </View>
 
         {/* Premium/Auth CTA Button */}
@@ -215,6 +221,27 @@ export default function HomeScreen() {
             {!isPremium && (
               <Ionicons name="chevron-forward" size={20} color="#9A9A9A" />
             )}
+          </View>
+        </TouchableOpacity>
+
+        {/* Ad Banner */}
+        <AdBanner />
+
+        {/* Store Button */}
+        <TouchableOpacity
+          style={styles.storeButton}
+          onPress={() => router.push('/store')}
+          activeOpacity={0.5}
+        >
+          <View style={styles.storeContent}>
+            <View style={styles.storeIconContainer}>
+              <Ionicons name="storefront-outline" size={20} color="#FFFFFF" />
+            </View>
+            <View style={styles.storeTextContainer}>
+              <Text style={styles.storeTitle}>Stream Disc Store</Text>
+              <Text style={styles.storeSubtitle}>Browse and buy physical discs</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#9A9A9A" />
           </View>
         </TouchableOpacity>
 
@@ -263,9 +290,14 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   header: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 20,
     paddingHorizontal: 16,
+  },
+  titleContainer: {
+    alignItems: 'flex-start',
   },
   title: {
     fontSize: 40,
@@ -280,6 +312,12 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     textTransform: 'lowercase',
     fontWeight: '400',
+  },
+  dashboardButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   premiumButton: {
     marginHorizontal: 16,
@@ -308,6 +346,45 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   premiumSubtitle: {
+    fontSize: 12,
+    color: '#9A9A9A',
+    fontWeight: '400',
+  },
+  storeButton: {
+    marginHorizontal: 16,
+    marginBottom: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    overflow: 'hidden',
+  },
+  storeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  storeIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  storeTextContainer: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  storeTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    letterSpacing: -0.2,
+    marginBottom: 2,
+  },
+  storeSubtitle: {
     fontSize: 12,
     color: '#9A9A9A',
     fontWeight: '400',

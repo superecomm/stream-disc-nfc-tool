@@ -81,8 +81,8 @@ export default {
     bundler: 'metro',
     output: 'static',
     meta: {
-      name: 'Stream Disc Studio - Create & Share NFC Content',
-      description: 'Create music albums, videos, and photos on NFC-enabled Stream Discs. Share your content with a tap.',
+      name: 'Stream Disc Studio - Create & Share NFC-enabled Discs',
+      description: 'Create music albums, videos, photos and more on NFC-enabled Stream Discs.',
       themeColor: '#000000',
     },
   },

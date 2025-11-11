@@ -12,6 +12,7 @@ export default function MiniPlayer() {
     isPlaying,
     position,
     duration,
+    albumArtwork,
     togglePlayPause,
     nextTrack,
     previousTrack,
@@ -41,7 +42,7 @@ export default function MiniPlayer() {
       <View style={styles.content}>
         <View style={styles.infoSection}>
           <Image
-            source={{ uri: currentTrack.albumId ? `https://via.placeholder.com/48` : 'https://via.placeholder.com/48' }}
+            source={{ uri: albumArtwork || 'https://via.placeholder.com/48/1C1C1E/999999?text=♫' }}
             style={styles.artwork}
           />
           <View style={styles.textContainer}>

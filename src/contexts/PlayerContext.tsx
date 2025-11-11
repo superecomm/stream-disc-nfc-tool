@@ -9,10 +9,11 @@ type PlayerState = {
   duration: number; // in seconds
   queue: Track[];
   currentIndex: number;
+  albumArtwork: string | null; // Album cover URL
 };
 
 type PlayerContextType = PlayerState & {
-  playTrack: (track: Track, queue?: Track[], startIndex?: number) => Promise<void>;
+  playTrack: (track: Track, queue?: Track[], startIndex?: number, albumArtwork?: string) => Promise<void>;
   pauseTrack: () => Promise<void>;
   resumeTrack: () => Promise<void>;
   nextTrack: () => Promise<void>;
@@ -40,6 +41,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     duration: 0,
     queue: [],
     currentIndex: -1,
+    albumArtwork: null,
   });
 
   const soundRef = useRef<Audio.Sound | null>(null);
@@ -94,7 +96,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  const playTrack = async (track: Track, queue: Track[] = [], startIndex: number = 0) => {
+  const playTrack = async (track: Track, queue: Track[] = [], startIndex: number = 0, albumArtwork: string = '') => {
     try {
       // Unload previous track
       if (soundRef.current) {
@@ -123,6 +125,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         duration: track.duration,
         queue: queue.length > 0 ? queue : [track],
         currentIndex: startIndex,
+        albumArtwork: albumArtwork || null,
       });
 
       startPositionTracking();

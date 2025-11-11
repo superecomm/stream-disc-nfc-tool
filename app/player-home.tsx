@@ -379,6 +379,28 @@ export default function PlayerHomeScreen() {
         mode={createMode}
         onModeChange={setCreateMode}
       />
+
+      {/* Floating Create Button - Always on top */}
+      {showCreateModal && (
+        <View style={styles.floatingButtonContainer}>
+          <TouchableOpacity
+            style={[
+              styles.floatingCreateButton,
+              createMode === 'studio' && styles.createButtonStudio,
+            ]}
+            onPress={() => setShowCreateModal(false)}
+            activeOpacity={0.8}
+          >
+            {createMode === 'studio' ? (
+              <Ionicons name="flame" size={32} color="#FFFFFF" />
+            ) : createMode === 'post' ? (
+              <Ionicons name="add-circle" size={32} color="#FFFFFF" />
+            ) : (
+              <Ionicons name="radio" size={32} color="#FFFFFF" />
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -568,5 +590,29 @@ const styles = StyleSheet.create({
   createButtonStudio: {
     backgroundColor: '#FF3B5C',
     borderColor: '#FF3B5C',
+  },
+  floatingButtonContainer: {
+    position: 'absolute',
+    bottom: 28,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 1000,
+    pointerEvents: 'box-none',
+  },
+  floatingCreateButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 12,
+    borderWidth: 3,
+    borderColor: '#000000',
   },
 });

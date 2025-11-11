@@ -46,19 +46,28 @@ export default function ModeCarousel({ activeMode, onModeChange }: ModeCarouselP
     },
   ];
 
-  // Center the active mode button
+  // Center the active mode button above the floating create button
   useEffect(() => {
-    const activeIndex = modes.findIndex(mode => mode.id === activeMode);
-    if (activeIndex !== -1 && scrollViewRef.current) {
-      // Calculate position to center the active button
-      const buttonWidth = 100; // Approximate width of button
-      const scrollToX = (activeIndex * (buttonWidth + 8)) - (width / 2) + (buttonWidth / 2);
-      
-      scrollViewRef.current.scrollTo({
-        x: Math.max(0, scrollToX),
-        animated: true,
-      });
-    }
+    const timer = setTimeout(() => {
+      const activeIndex = modes.findIndex(mode => mode.id === activeMode);
+      if (activeIndex !== -1 && scrollViewRef.current) {
+        // Each button is approximately 100px wide with 8px gap
+        const buttonWidth = 100;
+        const gap = 8;
+        
+        // Calculate scroll position to center the active button
+        // Since we have padding of (width/2 - 50), first button starts at the center
+        // We just need to scroll by (index * (buttonWidth + gap))
+        const scrollToX = activeIndex * (buttonWidth + gap);
+        
+        scrollViewRef.current.scrollTo({
+          x: scrollToX,
+          animated: true,
+        });
+      }
+    }, 150); // Small delay to ensure layout is complete
+
+    return () => clearTimeout(timer);
   }, [activeMode]);
 
   return (
@@ -68,8 +77,8 @@ export default function ModeCarousel({ activeMode, onModeChange }: ModeCarouselP
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
-        snapToInterval={108} // buttonWidth + gap
         decelerationRate="fast"
+        snapToAlignment="center"
       >
         {modes.map((mode) => {
           const isActive = activeMode === mode.id;
@@ -114,10 +123,9 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   scrollContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: width / 2 - 50, // Half screen minus half button width (100/2)
     gap: 8,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   modeCard: {
     borderRadius: 20,

@@ -19,6 +19,7 @@ import PromotionalBanner from '../src/components/PromotionalBanner';
 import { AdBanner } from '../src/components/AdBanner';
 import AlbumCard from '../src/components/AlbumCard';
 import MiniPlayer from '../src/components/MiniPlayer';
+import CreateModal from '../src/components/CreateModal';
 import { usePlayer } from '../src/contexts/PlayerContext';
 
 const { width } = Dimensions.get('window');
@@ -29,6 +30,7 @@ export default function PlayerHomeScreen() {
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState<MediaTab>('music');
   const [isFreeUser] = useState(true); // For demo, show ads
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const { currentTrack } = usePlayer();
 
   const handleAlbumPress = (albumId: string) => {
@@ -330,7 +332,7 @@ export default function PlayerHomeScreen() {
 
         <TouchableOpacity
           style={styles.createButton}
-          onPress={() => router.push('/')}
+          onPress={() => setShowCreateModal(true)}
           activeOpacity={0.8}
         >
           <Ionicons name="add" size={32} color="#000000" />
@@ -350,6 +352,9 @@ export default function PlayerHomeScreen() {
           <Text style={styles.navLabel}>Profile</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Create Modal */}
+      <CreateModal visible={showCreateModal} onClose={() => setShowCreateModal(false)} />
     </SafeAreaView>
   );
 }
@@ -533,5 +538,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+    borderWidth: 3,
+    borderColor: '#000000',
   },
 });

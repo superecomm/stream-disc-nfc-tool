@@ -188,14 +188,14 @@ export default function SignInScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Stream Disc Store Button */}
+          {/* Stream Disc App Button */}
           <TouchableOpacity
             style={styles.storeButton}
-            onPress={() => router.push('/store')}
+            onPress={() => router.push('/stream-disc-app')}
             activeOpacity={0.5}
           >
-            <Ionicons name="storefront-outline" size={18} color="#9A9A9A" />
-            <Text style={styles.storeButtonText}>Visit Stream Disc Store</Text>
+            <Ionicons name="phone-portrait-outline" size={18} color="#9A9A9A" />
+            <Text style={styles.storeButtonText}>Get Stream Disc Player App</Text>
             <Ionicons name="chevron-forward" size={18} color="#9A9A9A" />
           </TouchableOpacity>
         </ScrollView>

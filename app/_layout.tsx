@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useDeepLinking } from '../src/hooks/useDeepLinking';
 
 // Lazy import services to prevent initialization errors
 let authService: any = null;
@@ -9,6 +10,9 @@ let authService: any = null;
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Initialize deep linking
+  useDeepLinking();
 
   useEffect(() => {
     async function initializeApp() {
@@ -63,10 +67,12 @@ export default function RootLayout() {
         <Stack.Screen name="dashboard" />
         <Stack.Screen name="subscription" />
         <Stack.Screen name="store" />
+        <Stack.Screen name="stream-disc-app" />
         <Stack.Screen name="admin" />
         <Stack.Screen name="auth/sign-in" />
         <Stack.Screen name="auth/sign-up" />
         <Stack.Screen name="auth/forgot-password" />
+        <Stack.Screen name="album/[albumId]" />
         <Stack.Screen name="[contentId]" />
       </Stack>
     </>

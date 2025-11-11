@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,6 +23,7 @@ interface ModeCarouselProps {
 
 export default function ModeCarousel({ activeMode, onModeChange }: ModeCarouselProps) {
   const scrollViewRef = useRef<ScrollView>(null);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
   
   const modes = [
     {
@@ -46,18 +49,45 @@ export default function ModeCarousel({ activeMode, onModeChange }: ModeCarouselP
     },
   ];
 
-  // Center the active mode button above the floating create button
+  // Handle scroll events to detect which mode is centered
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (!isUserScrolling) return;
+
+    const scrollX = event.nativeEvent.contentOffset.x;
+    const buttonWidth = 100;
+    const gap = 8;
+    const itemWidth = buttonWidth + gap;
+
+    // Calculate which mode is closest to center
+    const centerIndex = Math.round(scrollX / itemWidth);
+    const newMode = modes[centerIndex]?.id;
+
+    // Only change if it's different from current mode
+    if (newMode && newMode !== activeMode) {
+      onModeChange(newMode);
+    }
+  };
+
+  const handleScrollBeginDrag = () => {
+    setIsUserScrolling(true);
+  };
+
+  const handleScrollEndDrag = () => {
+    // Keep user scrolling flag for a bit to capture momentum scroll
+    setTimeout(() => {
+      setIsUserScrolling(false);
+    }, 300);
+  };
+
+  // Center the active mode button (programmatic scroll)
   useEffect(() => {
+    if (isUserScrolling) return; // Don't interfere with user scrolling
+
     const timer = setTimeout(() => {
       const activeIndex = modes.findIndex(mode => mode.id === activeMode);
       if (activeIndex !== -1 && scrollViewRef.current) {
-        // Each button is approximately 100px wide with 8px gap
         const buttonWidth = 100;
         const gap = 8;
-        
-        // Calculate scroll position to center the active button
-        // Since we have padding of (width/2 - 50), first button starts at the center
-        // We just need to scroll by (index * (buttonWidth + gap))
         const scrollToX = activeIndex * (buttonWidth + gap);
         
         scrollViewRef.current.scrollTo({
@@ -65,10 +95,10 @@ export default function ModeCarousel({ activeMode, onModeChange }: ModeCarouselP
           animated: true,
         });
       }
-    }, 150); // Small delay to ensure layout is complete
+    }, 150);
 
     return () => clearTimeout(timer);
-  }, [activeMode]);
+  }, [activeMode, isUserScrolling]);
 
   return (
     <View style={styles.container}>
@@ -79,6 +109,11 @@ export default function ModeCarousel({ activeMode, onModeChange }: ModeCarouselP
         contentContainerStyle={styles.scrollContent}
         decelerationRate="fast"
         snapToAlignment="center"
+        onScroll={handleScroll}
+        onScrollBeginDrag={handleScrollBeginDrag}
+        onScrollEndDrag={handleScrollEndDrag}
+        onMomentumScrollEnd={handleScroll}
+        scrollEventThrottle={16}
       >
         {modes.map((mode) => {
           const isActive = activeMode === mode.id;

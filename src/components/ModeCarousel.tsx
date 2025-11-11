@@ -117,7 +117,7 @@ export default function ModeCarousel({ activeMode, onModeChange }: ModeCarouselP
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 80, // Above bottom nav
+    bottom: 100, // Above bottom nav with more spacing
     left: 0,
     right: 0,
     zIndex: 100,

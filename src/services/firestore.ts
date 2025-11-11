@@ -17,6 +17,7 @@ import { Disc } from '../types';
 
 const USERS_COLLECTION = 'users';
 const DISCS_COLLECTION = 'discs';
+const ALBUMS_COLLECTION = 'albums'; // New collection for albums
 const TEMPLATES_COLLECTION = 'templates';
 const REGISTERED_DISCS_COLLECTION = 'registeredDiscs'; // Manufacturing registry
 const DISC_SCANS_COLLECTION = 'discScans'; // Scan logs
@@ -640,6 +641,108 @@ class FirestoreService {
       console.log('Test Stream Discs seeded successfully');
     } catch (error) {
       console.error('Error seeding test Stream Discs:', error);
+      throw error;
+    }
+  }
+
+  // ============ ALBUM MANAGEMENT ============
+
+  /**
+   * Create a new album
+   */
+  async createAlbum(albumData: {
+    title: string;
+    artist: string;
+    description: string;
+    coverUrl: string;
+    year: number;
+    genre: string;
+    price: number;
+    trackCount: number;
+    userId: string;
+    createdAt: string;
+  }): Promise<string> {
+    try {
+      const albumRef = await addDoc(collection(db, ALBUMS_COLLECTION), {
+        ...albumData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      console.log('Album created with ID:', albumRef.id);
+      return albumRef.id;
+    } catch (error) {
+      console.error('Error creating album:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get album by ID
+   */
+  async getAlbum(albumId: string) {
+    try {
+      const albumRef = doc(db, ALBUMS_COLLECTION, albumId);
+      const albumSnap = await getDoc(albumRef);
+
+      if (albumSnap.exists()) {
+        return { id: albumSnap.id, ...albumSnap.data() };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting album:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get user's albums
+   */
+  async getUserAlbums(userId: string) {
+    try {
+      const albumsQuery = query(
+        collection(db, ALBUMS_COLLECTION),
+        where('userId', '==', userId)
+      );
+      const querySnapshot = await getDocs(albumsQuery);
+
+      const albums: any[] = [];
+      querySnapshot.forEach((doc) => {
+        albums.push({ id: doc.id, ...doc.data() });
+      });
+
+      return albums;
+    } catch (error) {
+      console.error('Error getting user albums:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update album
+   */
+  async updateAlbum(albumId: string, updates: Partial<any>): Promise<void> {
+    try {
+      const albumRef = doc(db, ALBUMS_COLLECTION, albumId);
+      await updateDoc(albumRef, {
+        ...updates,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Error updating album:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete album
+   */
+  async deleteAlbum(albumId: string): Promise<void> {
+    try {
+      const albumRef = doc(db, ALBUMS_COLLECTION, albumId);
+      await deleteDoc(albumRef);
+    } catch (error) {
+      console.error('Error deleting album:', error);
       throw error;
     }
   }

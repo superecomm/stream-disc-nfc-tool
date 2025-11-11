@@ -455,6 +455,34 @@ export default function CreateAlbumScreen() {
           <Ionicons name="bookmark-outline" size={18} color="#9A9A9A" />
           <Text style={styles.saveDraftText}>Save as Draft</Text>
         </TouchableOpacity>
+
+        {/* Preview Button */}
+        <TouchableOpacity
+          style={[styles.previewButton, (!albumTitle || !artistName || !coverImage) && styles.previewButtonDisabled]}
+          onPress={() => {
+            if (!albumTitle || !artistName || !coverImage) {
+              Alert.alert('Missing Information', 'Please add at least a title, artist name, and cover image to preview your album.');
+              return;
+            }
+            router.push({
+              pathname: '/album-preview',
+              params: {
+                title: albumTitle,
+                artist: artistName,
+                description,
+                coverImage,
+                trackCount: audioFiles.length.toString(),
+              },
+            });
+          }}
+          activeOpacity={0.5}
+          disabled={!albumTitle || !artistName || !coverImage}
+        >
+          <Ionicons name="eye-outline" size={20} color={(!albumTitle || !artistName || !coverImage) ? "#666666" : "#FFFFFF"} />
+          <Text style={[styles.previewButtonText, (!albumTitle || !artistName || !coverImage) && styles.previewButtonTextDisabled]}>
+            Preview Album
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
 
       {/* Publish Modal */}
@@ -725,6 +753,33 @@ const styles = StyleSheet.create({
     color: '#9A9A9A',
     fontSize: 14,
     fontWeight: '500',
+  },
+  previewButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: '#06FFA5',
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginBottom: 24,
+    shadowColor: '#06FFA5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  previewButtonDisabled: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    shadowOpacity: 0,
+  },
+  previewButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  previewButtonTextDisabled: {
+    color: '#666666',
   },
   publishToggle: {
     marginBottom: 20,

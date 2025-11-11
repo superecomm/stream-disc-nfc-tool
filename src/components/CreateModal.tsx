@@ -236,6 +236,26 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
 
         {/* Mode Carousel - Positioned above bottom nav */}
         <ModeCarousel activeMode={mode} onModeChange={onModeChange} />
+
+        {/* Floating Create Button */}
+        <View style={styles.floatingButtonContainer}>
+          <TouchableOpacity
+            style={[
+              styles.floatingCreateButton,
+              mode === 'studio' && styles.floatingButtonStudio,
+            ]}
+            onPress={onClose}
+            activeOpacity={0.8}
+          >
+            {mode === 'studio' ? (
+              <Ionicons name="flame" size={32} color="#FFFFFF" />
+            ) : mode === 'post' ? (
+              <Ionicons name="add-circle" size={32} color="#FFFFFF" />
+            ) : (
+              <Ionicons name="radio" size={32} color="#FFFFFF" />
+            )}
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     </Modal>
   );
@@ -369,6 +389,34 @@ const styles = StyleSheet.create({
   createButtonPlaceholder: {
     width: 56,
     height: 56,
+  },
+  floatingButtonContainer: {
+    position: 'absolute',
+    bottom: 28,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 1000,
+    pointerEvents: 'box-none',
+  },
+  floatingCreateButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 12,
+    borderWidth: 3,
+    borderColor: '#000000',
+  },
+  floatingButtonStudio: {
+    backgroundColor: '#FF3B5C',
+    borderColor: '#FF3B5C',
   },
 });
 

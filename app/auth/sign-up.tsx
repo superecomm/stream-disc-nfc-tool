@@ -56,7 +56,7 @@ export default function SignUpScreen() {
     setIsLoading(true);
     try {
       await authService.signUpWithEmail(email, password, displayName);
-      router.replace('/');
+      router.replace('/player-home');
     } catch (error: any) {
       Alert.alert('Sign Up Failed', error.message || 'Please try again');
     } finally {
@@ -73,7 +73,7 @@ export default function SignUpScreen() {
     setIsLoading(true);
     try {
       await authService.signInWithGoogle();
-      router.replace('/');
+      router.replace('/player-home');
     } catch (error: any) {
       Alert.alert('Google Sign Up Failed', error.message || 'Please try again');
     } finally {
@@ -90,7 +90,7 @@ export default function SignUpScreen() {
     setIsLoading(true);
     try {
       await authService.signInWithApple();
-      router.replace('/');
+      router.replace('/player-home');
     } catch (error: any) {
       Alert.alert('Apple Sign Up Failed', error.message || 'Please try again');
     } finally {
@@ -282,7 +282,7 @@ export default function SignUpScreen() {
           {/* Stream Disc App Button */}
           <TouchableOpacity
             style={styles.storeButton}
-            onPress={() => router.push('/stream-disc-app')}
+            onPress={() => router.push('/player-home')}
             activeOpacity={0.5}
           >
             <Ionicons name="phone-portrait-outline" size={18} color="#9A9A9A" />

@@ -60,6 +60,7 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" />
+        <Stack.Screen name="player-home" />
         <Stack.Screen name="create-album" />
         <Stack.Screen name="write-nfc" />
         <Stack.Screen name="success" />

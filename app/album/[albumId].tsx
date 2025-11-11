@@ -8,40 +8,146 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
-  Alert,
   Dimensions,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
-import { firestoreService } from '../../src/services/firestore';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
-interface Track {
+type Track = {
+  id: string;
   title: string;
-  fileUrl: string;
-  duration?: number;
-}
+  duration: number; // in seconds
+  audioUrl: string;
+};
 
-interface Disc {
+type Album = {
   id: string;
   title: string;
   artist: string;
-  coverImage: string;
-  type: string;
-  tracks?: Track[];
-  description?: string;
-}
+  coverUrl: string;
+  year: number;
+  genre: string;
+  audioQuality: string;
+  description: string;
+  tracks: Track[];
+};
+
+// Mock album data - Midnight Dreams by Luna Rey (from main app)
+const MOCK_ALBUMS: { [key: string]: Album } = {
+  'midnight-dreams': {
+    id: 'midnight-dreams',
+    title: 'Midnight Dreams',
+    artist: 'Luna Rey',
+    coverUrl: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=400&h=400&fit=crop',
+    year: 2024,
+    genre: 'Electronic',
+    audioQuality: 'Lossless',
+    description:
+      'A journey through nocturnal soundscapes and ethereal beats. This album explores the liminal space between waking and dreaming.',
+    tracks: [
+      {
+        id: 't1',
+        title: 'Moonlight Sonata (Reimagined)',
+        duration: 272, // 4:32
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+      },
+      {
+        id: 't2',
+        title: 'Neon Nights',
+        duration: 225, // 3:45
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+      },
+      {
+        id: 't3',
+        title: 'Echo Chamber',
+        duration: 312, // 5:12
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+      },
+      {
+        id: 't4',
+        title: 'Stardust Memories',
+        duration: 258, // 4:18
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+      },
+      {
+        id: 't5',
+        title: 'Digital Dreams',
+        duration: 236, // 3:56
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
+      },
+      {
+        id: 't6',
+        title: 'Cosmic Lullaby',
+        duration: 383, // 6:23
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
+      },
+    ],
+  },
+  'golden-hour': {
+    id: 'golden-hour',
+    title: 'Golden Hour',
+    artist: 'The Sunset Collective',
+    coverUrl: 'https://images.unsplash.com/photo-1458560871784-56d23406c091?w=400&h=400&fit=crop',
+    year: 2023,
+    genre: 'Indie Pop',
+    audioQuality: 'Lossless',
+    description: 'Capturing the warmth of the golden hour with melodic indie pop sounds.',
+    tracks: [
+      {
+        id: 't1',
+        title: 'Summer Breeze',
+        duration: 245,
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3',
+      },
+      {
+        id: 't2',
+        title: 'Golden Hour',
+        duration: 267,
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3',
+      },
+    ],
+  },
+  'urban-nights': {
+    id: 'urban-nights',
+    title: 'Urban Nights',
+    artist: 'Metro Beats',
+    coverUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop',
+    year: 2024,
+    genre: 'Hip Hop',
+    audioQuality: 'Lossless',
+    description: 'The pulse of the city after dark, captured in beats and rhymes.',
+    tracks: [
+      {
+        id: 't1',
+        title: 'City Lights',
+        duration: 221,
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+      },
+      {
+        id: 't2',
+        title: 'Midnight Run',
+        duration: 198,
+        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+      },
+    ],
+  },
+};
 
 export default function AlbumPlayerScreen() {
   const router = useRouter();
   const { albumId } = useLocalSearchParams<{ albumId: string }>();
-  const [disc, setDisc] = useState<Disc | null>(null);
+  const [album, setAlbum] = useState<Album | null>(null);
   const [loading, setLoading] = useState(true);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [currentTrack, setCurrentTrack] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [showDescription, setShowDescription] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
     loadAlbum();
@@ -55,23 +161,17 @@ export default function AlbumPlayerScreen() {
   const loadAlbum = async () => {
     try {
       if (!albumId) {
-        Alert.alert('Error', 'No album ID provided');
-        router.back();
+        setLoading(false);
         return;
       }
 
-      const discData = await firestoreService.getDisc(albumId);
-      
-      if (!discData) {
-        Alert.alert('Error', 'Album not found');
-        router.push('/blank-disc');
-        return;
+      // Load from mock data
+      const mockAlbum = MOCK_ALBUMS[albumId];
+      if (mockAlbum) {
+        setAlbum(mockAlbum);
       }
-
-      setDisc(discData);
     } catch (error) {
       console.error('Error loading album:', error);
-      Alert.alert('Error', 'Failed to load album');
     } finally {
       setLoading(false);
     }
@@ -79,20 +179,14 @@ export default function AlbumPlayerScreen() {
 
   const playTrack = async (track: Track, index: number) => {
     try {
-      // If already playing this track, toggle pause
-      if (currentTrack === index && sound) {
-        await togglePlayPause();
-        return;
-      }
-
-      // Stop current track if playing
+      // Stop current track
       if (sound) {
         await sound.unloadAsync();
       }
 
       // Load and play new track
       const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: track.fileUrl },
+        { uri: track.audioUrl },
         { shouldPlay: true }
       );
 
@@ -102,143 +196,243 @@ export default function AlbumPlayerScreen() {
 
       // Handle playback status
       newSound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded) {
-          setIsPlaying(status.isPlaying);
+        if (status.isLoaded && status.didJustFinish) {
+          // Play next track
+          playNextTrack(index);
         }
       });
     } catch (error) {
       console.error('Error playing track:', error);
-      Alert.alert('Error', 'Failed to play track');
     }
   };
 
   const togglePlayPause = async () => {
-    if (!sound) return;
-
-    try {
-      const status = await sound.getStatusAsync();
-      if (status.isLoaded) {
-        if (status.isPlaying) {
-          await sound.pauseAsync();
-        } else {
-          await sound.playAsync();
-        }
+    if (sound) {
+      if (isPlaying) {
+        await sound.pauseAsync();
+      } else {
+        await sound.playAsync();
       }
-    } catch (error) {
-      console.error('Error toggling playback:', error);
+      setIsPlaying(!isPlaying);
     }
   };
 
+  const playNextTrack = (currentIndex: number) => {
+    if (album && currentIndex < album.tracks.length - 1) {
+      playTrack(album.tracks[currentIndex + 1], currentIndex + 1);
+    } else {
+      setCurrentTrack(null);
+      setIsPlaying(false);
+    }
+  };
+
+  const playPreviousTrack = (currentIndex: number) => {
+    if (album && currentIndex > 0) {
+      playTrack(album.tracks[currentIndex - 1], currentIndex - 1);
+    }
+  };
+
+  const handlePlayAll = () => {
+    if (album && album.tracks.length > 0) {
+      playTrack(album.tracks[0], 0);
+    }
+  };
+
+  const handleShuffle = () => {
+    if (album && album.tracks.length > 0) {
+      const randomIndex = Math.floor(Math.random() * album.tracks.length);
+      playTrack(album.tracks[randomIndex], randomIndex);
+    }
+  };
+
+  const formatDuration = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleScroll = (event: any) => {
+    setScrollY(event.nativeEvent.contentOffset.y);
+  };
+
+  const headerOpacity = Math.min(scrollY / 200, 1);
+
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#06FFA5" />
-          <Text style={styles.loadingText}>Loading album...</Text>
-        </View>
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#FF3B5C" />
+        <Text style={styles.loadingText}>Loading Album...</Text>
       </SafeAreaView>
     );
   }
 
-  if (!disc) {
-    return null;
+  if (!album) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <Text style={styles.errorText}>Album not found</Text>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>Go Back</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
   }
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{disc.type.toUpperCase()}</Text>
-          <View style={styles.placeholder} />
-        </View>
+  const totalDuration = album.tracks.reduce((sum, track) => sum + track.duration, 0);
+  const totalMinutes = Math.floor(totalDuration / 60);
 
-        {/* Cover Image */}
-        <View style={styles.coverContainer}>
-          {disc.coverImage ? (
-            <Image source={{ uri: disc.coverImage }} style={styles.coverImage} />
-          ) : (
-            <View style={[styles.coverImage, styles.coverPlaceholder]}>
-              <Ionicons name="disc-outline" size={80} color="#666666" />
-            </View>
-          )}
+  return (
+    <View style={styles.container}>
+      {/* Fixed Header with Fade-in */}
+      <LinearGradient
+        colors={['rgba(0, 0, 0, 0.9)', 'rgba(0, 0, 0, 0)']}
+        style={[styles.fixedHeader, { opacity: headerOpacity }]}
+      >
+        <SafeAreaView>
+          <View style={styles.headerContent}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.headerBackButton}>
+              <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              {album.title}
+            </Text>
+            <TouchableOpacity style={styles.headerMenuButton}>
+              <Ionicons name="ellipsis-horizontal" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
+        {/* Album Artwork */}
+        <View style={styles.artworkContainer}>
+          <Image source={{ uri: album.coverUrl }} style={styles.artwork} />
         </View>
 
         {/* Album Info */}
         <View style={styles.infoContainer}>
-          <Text style={styles.albumTitle}>{disc.title}</Text>
-          <Text style={styles.artistName}>{disc.artist}</Text>
-          {disc.description && (
-            <Text style={styles.description}>{disc.description}</Text>
-          )}
+          <Text style={styles.albumTitle}>{album.title}</Text>
+          <TouchableOpacity>
+            <Text style={styles.artistName}>{album.artist}</Text>
+          </TouchableOpacity>
+          <Text style={styles.albumMetadata}>
+            {album.genre} · {album.year} · {album.audioQuality}
+          </Text>
+          <Text style={styles.albumSubtext}>
+            {album.tracks.length} songs, {totalMinutes} min
+          </Text>
         </View>
 
-        {/* Tracks List */}
-        {disc.tracks && disc.tracks.length > 0 && (
-          <View style={styles.tracksContainer}>
-            <Text style={styles.tracksHeader}>Tracks</Text>
-            {disc.tracks.map((track, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.trackItem,
-                  currentTrack === index && styles.trackItemActive,
-                ]}
-                onPress={() => playTrack(track, index)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.trackNumber}>
-                  {currentTrack === index && isPlaying ? (
-                    <Ionicons name="pause" size={16} color="#06FFA5" />
-                  ) : currentTrack === index ? (
-                    <Ionicons name="play" size={16} color="#06FFA5" />
-                  ) : (
-                    <Text style={styles.trackNumberText}>{index + 1}</Text>
-                  )}
-                </View>
-                <View style={styles.trackInfo}>
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+          <TouchableOpacity style={styles.playButton} onPress={handlePlayAll}>
+            <Ionicons name="play" size={24} color="#FFFFFF" style={{ marginLeft: 4 }} />
+            <Text style={styles.playButtonText}>Play</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.shuffleButton} onPress={handleShuffle}>
+            <Ionicons name="shuffle" size={20} color="#FFFFFF" />
+            <Text style={styles.shuffleButtonText}>Shuffle</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Icon Row */}
+        <View style={styles.iconRow}>
+          <TouchableOpacity onPress={() => setIsLiked(!isLiked)}>
+            <Ionicons
+              name={isLiked ? 'heart' : 'heart-outline'}
+              size={24}
+              color={isLiked ? '#FF3B5C' : '#FFFFFF'}
+            />
+          </TouchableOpacity>
+
+          <TouchableOpacity>
+            <Ionicons name="add" size={28} color="#FFFFFF" />
+          </TouchableOpacity>
+
+          <TouchableOpacity>
+            <Ionicons name="download-outline" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Track List */}
+        <View style={styles.trackList}>
+          {album.tracks.map((track, index) => (
+            <TouchableOpacity
+              key={track.id}
+              style={[
+                styles.trackItem,
+                currentTrack === index && styles.trackItemActive,
+              ]}
+              onPress={() => playTrack(track, index)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.trackNumber}>
+                {currentTrack === index && isPlaying ? (
+                  <Ionicons name="volume-medium" size={16} color="#FF3B5C" />
+                ) : (
                   <Text
                     style={[
-                      styles.trackTitle,
-                      currentTrack === index && styles.trackTitleActive,
+                      styles.trackNumberText,
+                      currentTrack === index && styles.trackNumberActive,
                     ]}
-                    numberOfLines={1}
                   >
-                    {track.title}
+                    {index + 1}
                   </Text>
-                  {track.duration && track.duration > 0 && (
-                    <Text style={styles.trackDuration}>
-                      {Math.floor(track.duration / 60)}:
-                      {String(Math.floor(track.duration % 60)).padStart(2, '0')}
-                    </Text>
-                  )}
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
+                )}
+              </View>
 
-        {/* Player Controls */}
-        {currentTrack !== null && sound && (
-          <View style={styles.playerControls}>
-            <TouchableOpacity
-              style={styles.playButton}
-              onPress={togglePlayPause}
-              activeOpacity={0.8}
-            >
-              <Ionicons
-                name={isPlaying ? 'pause' : 'play'}
-                size={32}
-                color="#FFFFFF"
-              />
+              <View style={styles.trackInfo}>
+                <Text
+                  style={[
+                    styles.trackTitle,
+                    currentTrack === index && styles.trackTitleActive,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {track.title}
+                </Text>
+                <Text style={styles.trackArtist} numberOfLines={1}>
+                  {album.artist}
+                </Text>
+              </View>
+
+              <Text style={styles.trackDuration}>{formatDuration(track.duration)}</Text>
+
+              <TouchableOpacity style={styles.trackMenuButton}>
+                <Ionicons name="ellipsis-horizontal" size={20} color="#8E8E93" />
+              </TouchableOpacity>
             </TouchableOpacity>
-          </View>
-        )}
+          ))}
+        </View>
+
+        {/* Album Description */}
+        <View style={styles.descriptionContainer}>
+          <Text style={styles.descriptionDate}>
+            November 6, 2025 • {album.tracks.length} songs, {totalMinutes} min
+          </Text>
+          <Text
+            style={styles.descriptionText}
+            numberOfLines={showDescription ? undefined : 3}
+          >
+            {album.description}
+          </Text>
+          <TouchableOpacity onPress={() => setShowDescription(!showDescription)}>
+            <Text style={styles.descriptionMore}>
+              {showDescription ? 'less' : 'more'} <Ionicons name="chevron-forward" size={12} />
+            </Text>
+          </TouchableOpacity>
+          <Text style={styles.descriptionLabel}>℗ Independent</Text>
+        </View>
+
+        <View style={styles.bottomSpacer} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -249,152 +443,215 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
+    backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
   },
   loadingText: {
+    color: '#FFFFFF',
     marginTop: 16,
-    fontSize: 14,
-    color: '#999999',
+    fontSize: 16,
+  },
+  errorText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  backButtonText: {
+    color: '#FF3B5C',
+    fontSize: 16,
+    marginTop: 16,
+  },
+  fixedHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    paddingTop: 8,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  headerBackButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginHorizontal: 16,
+    textAlign: 'center',
+  },
+  headerMenuButton: {
+    padding: 4,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 100,
+    paddingTop: 60,
   },
-  header: {
-    flexDirection: 'row',
+  artworkContainer: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#999999',
-    letterSpacing: 1,
-  },
-  placeholder: {
-    width: 40,
-  },
-  coverContainer: {
     paddingHorizontal: 32,
     marginBottom: 24,
   },
-  coverImage: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: 16,
-    backgroundColor: '#1a1a1a',
-  },
-  coverPlaceholder: {
-    justifyContent: 'center',
-    alignItems: 'center',
+  artwork: {
+    width: width - 64,
+    height: width - 64,
+    borderRadius: 8,
   },
   infoContainer: {
-    paddingHorizontal: 32,
-    marginBottom: 32,
+    paddingHorizontal: 24,
+    marginBottom: 24,
   },
   albumTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
     color: '#FFFFFF',
     marginBottom: 8,
-    letterSpacing: -0.5,
   },
   artistName: {
     fontSize: 18,
-    color: '#999999',
-    fontWeight: '500',
+    color: '#FF3B5C',
+    fontWeight: '600',
+    marginBottom: 8,
   },
-  description: {
+  albumMetadata: {
     fontSize: 14,
-    color: '#666666',
-    marginTop: 12,
-    lineHeight: 20,
+    color: '#8E8E93',
+    marginBottom: 4,
   },
-  tracksContainer: {
-    paddingHorizontal: 32,
-    marginBottom: 32,
+  albumSubtext: {
+    fontSize: 14,
+    color: '#8E8E93',
   },
-  tracksHeader: {
+  actionButtons: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    marginBottom: 24,
+    gap: 12,
+  },
+  playButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF3B5C',
+    paddingVertical: 14,
+    borderRadius: 24,
+    gap: 8,
+  },
+  playButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  shuffleButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2C2C2E',
+    paddingVertical: 14,
+    borderRadius: 24,
+    gap: 8,
+  },
+  shuffleButtonText: {
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 16,
-    letterSpacing: -0.3,
+  },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    marginBottom: 24,
+    gap: 32,
+  },
+  trackList: {
+    paddingHorizontal: 24,
+    marginBottom: 24,
   },
   trackItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
+    gap: 12,
   },
   trackItemActive: {
-    backgroundColor: 'rgba(6, 255, 165, 0.05)',
-    marginHorizontal: -8,
-    paddingHorizontal: 8,
+    backgroundColor: 'rgba(255, 59, 92, 0.1)',
+    marginHorizontal: -12,
+    paddingHorizontal: 12,
     borderRadius: 8,
-    borderBottomColor: 'transparent',
   },
   trackNumber: {
-    width: 32,
+    width: 24,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   trackNumberText: {
     fontSize: 14,
-    color: '#999999',
+    color: '#8E8E93',
     fontWeight: '500',
+  },
+  trackNumberActive: {
+    color: '#FF3B5C',
   },
   trackInfo: {
     flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
   trackTitle: {
-    flex: 1,
     fontSize: 16,
     color: '#FFFFFF',
     fontWeight: '400',
+    marginBottom: 2,
   },
   trackTitleActive: {
-    color: '#06FFA5',
-    fontWeight: '500',
+    color: '#FF3B5C',
+  },
+  trackArtist: {
+    fontSize: 14,
+    color: '#8E8E93',
   },
   trackDuration: {
     fontSize: 14,
-    color: '#666666',
-    marginLeft: 8,
-    fontWeight: '400',
+    color: '#8E8E93',
+    marginRight: 8,
   },
-  playerControls: {
-    paddingHorizontal: 32,
-    paddingTop: 16,
-    alignItems: 'center',
+  trackMenuButton: {
+    padding: 4,
   },
-  playButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#06FFA5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#06FFA5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+  descriptionContainer: {
+    paddingHorizontal: 24,
+    marginBottom: 32,
+  },
+  descriptionDate: {
+    fontSize: 12,
+    color: '#8E8E93',
+    marginBottom: 8,
+  },
+  descriptionText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  descriptionMore: {
+    fontSize: 14,
+    color: '#FF3B5C',
+    fontWeight: '600',
+    marginBottom: 16,
+  },
+  descriptionLabel: {
+    fontSize: 12,
+    color: '#8E8E93',
+  },
+  bottomSpacer: {
+    height: 100,
   },
 });
-

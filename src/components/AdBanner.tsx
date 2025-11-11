@@ -1,56 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { authService } from '../services/auth';
 
-export function AdBanner() {
-  const router = useRouter();
-  const [isPremium, setIsPremium] = useState(true); // Default to true to hide until loaded
-  const [isLoading, setIsLoading] = useState(true);
+const { width } = Dimensions.get('window');
 
-  useEffect(() => {
-    checkPremiumStatus();
+type AdPosition = 'top' | 'inline' | 'bottom';
 
-    // Listen for auth state changes
-    const unsubscribe = authService.onAuthStateChange(() => {
-      checkPremiumStatus();
-    });
+interface AdBannerProps {
+  position: AdPosition;
+}
 
-    return () => unsubscribe();
-  }, []);
-
-  const checkPremiumStatus = async () => {
-    try {
-      const premium = await authService.isPremium();
-      setIsPremium(premium);
-    } catch (error) {
-      console.error('Error checking premium status:', error);
-    } finally {
-      setIsLoading(false);
-    }
+export function AdBanner({ position }: AdBannerProps) {
+  const handleUpgradePress = () => {
+    console.log('Navigate to subscription page');
+    // TODO: Navigate to subscription
   };
-
-  // Don't show banner for premium users or while loading
-  if (isPremium || isLoading) {
-    return null;
-  }
 
   return (
     <TouchableOpacity
-      style={styles.container}
-      onPress={() => router.push('/subscription')}
-      activeOpacity={0.7}
+      style={[styles.container, position === 'inline' && styles.inlineContainer]}
+      onPress={handleUpgradePress}
+      activeOpacity={0.8}
     >
       <View style={styles.content}>
         <View style={styles.iconContainer}>
-          <Ionicons name="diamond-outline" size={20} color="#06FFA5" />
+          <Ionicons name="musical-notes" size={20} color="#FFFFFF" />
         </View>
         <View style={styles.textContainer}>
-          <Text style={styles.title}>Enjoying Stream Disc?</Text>
-          <Text style={styles.subtitle}>Upgrade to Pro to remove ads</Text>
+          <Text style={styles.title}>Ad-Free Listening</Text>
+          <Text style={styles.subtitle}>Upgrade to Premium</Text>
         </View>
-        <Ionicons name="chevron-forward" size={20} color="#9A9A9A" />
+        <Ionicons name="chevron-forward" size={20} color="#8E8E93" />
       </View>
     </TouchableOpacity>
   );
@@ -58,40 +38,40 @@ export function AdBanner() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(6, 255, 165, 0.08)',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(6, 255, 165, 0.2)',
-    marginVertical: 16,
+    backgroundColor: '#1C1C1E',
+    marginHorizontal: 16,
+    marginVertical: 12,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  inlineContainer: {
+    marginVertical: 24,
   },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    gap: 12,
   },
   iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(6, 255, 165, 0.15)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FF3B5C',
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 12,
   },
   textContainer: {
     flex: 1,
   },
   title: {
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFFFFF',
     marginBottom: 2,
-    letterSpacing: -0.2,
   },
   subtitle: {
+    color: '#8E8E93',
     fontSize: 12,
-    fontWeight: '400',
-    color: '#9A9A9A',
   },
 });
-

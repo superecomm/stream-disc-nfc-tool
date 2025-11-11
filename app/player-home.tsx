@@ -8,73 +8,222 @@ import {
   ScrollView,
   Image,
   Dimensions,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ALBUMS, Album, findAlbumById } from '../src/mocks/albums';
+import { PLAYLISTS } from '../src/mocks/playlists';
+import { MUSIC_CATEGORIES, PROMOTIONAL_ADS } from '../src/mocks/categories';
+import PromotionalBanner from '../src/components/PromotionalBanner';
+import { AdBanner } from '../src/components/AdBanner';
+import AlbumCard from '../src/components/AlbumCard';
 
 const { width } = Dimensions.get('window');
 
-// Mock Albums - Exact copy from main app
-const MOCK_ALBUMS = [
-  {
-    id: 'midnight-dreams',
-    title: 'Midnight Dreams',
-    artist: 'Luna Rey',
-    coverUrl: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=400&h=400&fit=crop',
-    year: 2024,
-    genre: 'Electronic',
-    price: 24.99,
-  },
-  {
-    id: 'golden-hour',
-    title: 'Golden Hour',
-    artist: 'The Sunset Collective',
-    coverUrl: 'https://images.unsplash.com/photo-1458560871784-56d23406c091?w=400&h=400&fit=crop',
-    year: 2023,
-    genre: 'Indie Pop',
-    price: 19.99,
-  },
-  {
-    id: 'urban-nights',
-    title: 'Urban Nights',
-    artist: 'Metro Beats',
-    coverUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop',
-    year: 2024,
-    genre: 'Hip Hop',
-    price: 22.99,
-  },
-];
-
-// Featured Playlists - Exact copy from main app
-const FEATURED_PLAYLISTS = [
-  {
-    id: 'playlist-1',
-    name: 'New Music Mix',
-    description: 'Your weekly mix of fresh tracks',
-    coverGradient: ['#FF6B9D', '#FFA07A', '#FF8E8E'],
-  },
-  {
-    id: 'playlist-2',
-    name: 'Chill Vibes',
-    description: 'Relaxing tunes for any moment',
-    coverGradient: ['#4FACFE', '#00F2FE'],
-  },
-];
+type MediaTab = 'charts' | 'music' | 'live' | 'podcast' | 'audiobooks';
 
 export default function PlayerHomeScreen() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<MediaTab>('music');
+  const [isFreeUser] = useState(true); // For demo, show ads
 
   const handleAlbumPress = (albumId: string) => {
     router.push(`/album/${albumId}` as any);
   };
 
-  const handleBuyPress = (album: any) => {
-    console.log('Buy album:', album.title);
-    // Future: Add to cart logic
+  const handleArtistPress = (artistId: string) => {
+    router.push(`/artist/${artistId}` as any);
   };
+
+  const handleBuyPress = (album: Album) => {
+    console.log('Buy album:', album.title);
+  };
+
+  // Render different content based on selected tab
+  const renderTabContent = () => {
+    switch (selectedTab) {
+      case 'charts':
+        return renderChartsTab();
+      case 'music':
+        return renderMusicTab();
+      case 'live':
+        return renderLiveTab();
+      case 'podcast':
+        return renderPodcastTab();
+      case 'audiobooks':
+        return renderAudiobooksTab();
+      default:
+        return renderMusicTab();
+    }
+  };
+
+  const renderChartsTab = () => (
+    <>
+      {/* Show ads for free users */}
+      {isFreeUser && <AdBanner position="top" />}
+
+      {/* Top Charts */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Top Charts</Text>
+          <TouchableOpacity>
+            <Text style={styles.seeAllText}>See All</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalScroll}
+        >
+          {ALBUMS.slice(0, 5).map((album) => (
+            <AlbumCard
+              key={album.id}
+              album={album}
+              onPress={() => handleAlbumPress(album.id)}
+              size="medium"
+              showBuyButton={true}
+            />
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Promotional Banner */}
+      <PromotionalBanner ad={PROMOTIONAL_ADS[0]} />
+    </>
+  );
+
+  const renderMusicTab = () => (
+    <>
+      {/* Show ads for free users */}
+      {isFreeUser && <AdBanner position="top" />}
+
+      {/* Top Picks for You */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Top Picks for You</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalScroll}
+        >
+          {PLAYLISTS.map((playlist) => (
+            <TouchableOpacity
+              key={playlist.id}
+              style={styles.playlistCard}
+              activeOpacity={0.7}
+            >
+              <LinearGradient
+                colors={playlist.coverGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.playlistGradient}
+              >
+                <View style={styles.playlistContent}>
+                  <View style={styles.playlistBadge}>
+                    <Text style={styles.playlistBadgeText}>STREAM DISC</Text>
+                  </View>
+                  <Text style={styles.playlistTitle}>{playlist.name}</Text>
+                </View>
+              </LinearGradient>
+              <Text style={styles.playlistDescription}>{playlist.description}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Recently Played */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Recently Played</Text>
+          <TouchableOpacity>
+            <Text style={styles.seeAllText}>See All</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalScroll}
+        >
+          {ALBUMS.slice(0, 4).map((album) => (
+            <AlbumCard
+              key={album.id}
+              album={album}
+              onPress={() => handleAlbumPress(album.id)}
+              size="medium"
+            />
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Promotional Banner - Super Bowl */}
+      <PromotionalBanner ad={PROMOTIONAL_ADS[0]} />
+
+      {/* All Music Categories */}
+      {MUSIC_CATEGORIES.map((category, index) => {
+        const categoryAlbums = category.albums
+          .map(id => findAlbumById(id))
+          .filter(Boolean) as Album[];
+
+        return (
+          <React.Fragment key={category.id}>
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>{category.title}</Text>
+                <TouchableOpacity>
+                  <Text style={styles.seeAllText}>See All</Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.horizontalScroll}
+              >
+                {categoryAlbums.map(album => (
+                  <AlbumCard
+                    key={album.id}
+                    album={album}
+                    onPress={() => handleAlbumPress(album.id)}
+                    size="medium"
+                    showBuyButton={true}
+                  />
+                ))}
+              </ScrollView>
+            </View>
+            
+            {/* Show ads every 3 categories for free users */}
+            {isFreeUser && (index + 1) % 3 === 0 && <AdBanner position="inline" />}
+          </React.Fragment>
+        );
+      })}
+
+      {/* Year-End Sale Promo */}
+      <PromotionalBanner ad={PROMOTIONAL_ADS[1]} />
+    </>
+  );
+
+  const renderLiveTab = () => (
+    <View style={styles.emptyState}>
+      <Ionicons name="radio-outline" size={64} color="#8E8E93" />
+      <Text style={styles.emptyStateTitle}>Live Content</Text>
+      <Text style={styles.emptyStateSubtitle}>Coming soon</Text>
+    </View>
+  );
+
+  const renderPodcastTab = () => (
+    <View style={styles.emptyState}>
+      <Ionicons name="mic-outline" size={64} color="#8E8E93" />
+      <Text style={styles.emptyStateTitle}>Podcasts</Text>
+      <Text style={styles.emptyStateSubtitle}>Coming soon</Text>
+    </View>
+  );
+
+  const renderAudiobooksTab = () => (
+    <View style={styles.emptyState}>
+      <Ionicons name="book-outline" size={64} color="#8E8E93" />
+      <Text style={styles.emptyStateTitle}>Audiobooks</Text>
+      <Text style={styles.emptyStateSubtitle}>Coming soon</Text>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -103,149 +252,60 @@ export default function PlayerHomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.tabsScroll}
           >
-            <TouchableOpacity style={styles.tab}>
-              <Ionicons name="compass-outline" size={18} color="#999999" />
-              <Text style={styles.tabText}>Charts</Text>
+            <TouchableOpacity
+              style={[styles.tab, selectedTab === 'charts' && styles.tabActive]}
+              onPress={() => setSelectedTab('charts')}
+            >
+              <Ionicons
+                name="compass-outline"
+                size={18}
+                color={selectedTab === 'charts' ? '#FFFFFF' : '#999999'}
+              />
+              <Text style={[styles.tabText, selectedTab === 'charts' && styles.tabTextActive]}>
+                Charts
+              </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.tab, styles.tabActive]}>
-              <Text style={[styles.tabText, styles.tabTextActive]}>Music</Text>
+            <TouchableOpacity
+              style={[styles.tab, selectedTab === 'music' && styles.tabActive]}
+              onPress={() => setSelectedTab('music')}
+            >
+              <Text style={[styles.tabText, selectedTab === 'music' && styles.tabTextActive]}>
+                Music
+              </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.tab}>
-              <Text style={styles.tabText}>Live</Text>
+            <TouchableOpacity
+              style={[styles.tab, selectedTab === 'live' && styles.tabActive]}
+              onPress={() => setSelectedTab('live')}
+            >
+              <Text style={[styles.tabText, selectedTab === 'live' && styles.tabTextActive]}>
+                Live
+              </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.tab}>
-              <Text style={styles.tabText}>Podcast</Text>
+            <TouchableOpacity
+              style={[styles.tab, selectedTab === 'podcast' && styles.tabActive]}
+              onPress={() => setSelectedTab('podcast')}
+            >
+              <Text style={[styles.tabText, selectedTab === 'podcast' && styles.tabTextActive]}>
+                Podcast
+              </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.tab}>
-              <Text style={styles.tabText}>Audio Books</Text>
+            <TouchableOpacity
+              style={[styles.tab, selectedTab === 'audiobooks' && styles.tabActive]}
+              onPress={() => setSelectedTab('audiobooks')}
+            >
+              <Text style={[styles.tabText, selectedTab === 'audiobooks' && styles.tabTextActive]}>
+                Audio Books
+              </Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
 
-        {/* Top Picks for You */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Top Picks for You</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalScroll}
-          >
-            {FEATURED_PLAYLISTS.map((playlist) => (
-              <TouchableOpacity
-                key={playlist.id}
-                style={styles.playlistCard}
-                activeOpacity={0.7}
-              >
-                <LinearGradient
-                  colors={playlist.coverGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.playlistGradient}
-                >
-                  <View style={styles.playlistContent}>
-                    <View style={styles.playlistBadge}>
-                      <Text style={styles.playlistBadgeText}>STREAM DISC</Text>
-                    </View>
-                    <Text style={styles.playlistTitle}>{playlist.name}</Text>
-                  </View>
-                </LinearGradient>
-                <Text style={styles.playlistDescription}>{playlist.description}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Recently Played */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recently Played</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>See All</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalScroll}
-          >
-            {MOCK_ALBUMS.map((album) => (
-              <TouchableOpacity
-                key={album.id}
-                style={styles.albumCard}
-                onPress={() => handleAlbumPress(album.id)}
-                activeOpacity={0.7}
-              >
-                <Image source={{ uri: album.coverUrl }} style={styles.albumCover} />
-                <Text style={styles.albumTitle} numberOfLines={1}>
-                  {album.title}
-                </Text>
-                <Text style={styles.albumArtist} numberOfLines={1}>
-                  {album.artist}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* New Releases */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>New Releases</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeAllText}>See All</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalScroll}
-          >
-            {MOCK_ALBUMS.map((album) => (
-              <TouchableOpacity
-                key={album.id}
-                style={styles.albumCard}
-                onPress={() => handleAlbumPress(album.id)}
-                activeOpacity={0.7}
-              >
-                <Image source={{ uri: album.coverUrl }} style={styles.albumCover} />
-                <Text style={styles.albumTitle} numberOfLines={1}>
-                  {album.title}
-                </Text>
-                <Text style={styles.albumArtist} numberOfLines={1}>
-                  {album.artist}
-                </Text>
-                <TouchableOpacity
-                  style={styles.buySection}
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    handleBuyPress(album);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.buyRow}>
-                    <Ionicons name="cart-outline" size={14} color="#FF3B5C" />
-                    <Text style={styles.price}>${album.price.toFixed(2)}</Text>
-                  </View>
-                  <Text style={styles.buyLabel}>Buy on Stream Disc</Text>
-                </TouchableOpacity>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Super Bowl LIX Promo Banner */}
-        <View style={styles.promoBanner}>
-          <Text style={styles.promoTitle}>Super Bowl LIX</Text>
-          <Text style={styles.promoSubtitle}>Stream the official halftime show album</Text>
-          <TouchableOpacity style={styles.promoButton} activeOpacity={0.8}>
-            <Text style={styles.promoButtonText}>Listen Now</Text>
-            <Ionicons name="chevron-forward" size={18} color="#000000" />
-          </TouchableOpacity>
-        </View>
+        {/* Tab Content */}
+        {renderTabContent()}
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -253,7 +313,7 @@ export default function PlayerHomeScreen() {
       {/* Mini Player (Mock) */}
       <View style={styles.miniPlayer}>
         <Image
-          source={{ uri: MOCK_ALBUMS[0].coverUrl }}
+          source={{ uri: ALBUMS[0].coverUrl }}
           style={styles.miniPlayerArt}
         />
         <View style={styles.miniPlayerInfo}>
@@ -441,83 +501,23 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     fontSize: 13,
   },
-  // Album Cards
-  albumCard: {
-    width: width * 0.42,
-    marginRight: 12,
+  // Empty State
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 100,
   },
-  albumCover: {
-    width: width * 0.42,
-    height: width * 0.42,
-    borderRadius: 8,
-    backgroundColor: '#1C1C1E',
+  emptyStateTitle: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '700',
+    marginTop: 16,
     marginBottom: 8,
   },
-  albumTitle: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  albumArtist: {
-    color: '#8E8E93',
-    fontSize: 13,
-  },
-  // Buy Section
-  buySection: {
-    marginTop: 8,
-    gap: 2,
-  },
-  buyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  price: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  buyLabel: {
-    color: '#8E8E93',
-    fontSize: 9,
-    fontWeight: '500',
-    letterSpacing: 0.2,
-    marginTop: 1,
-  },
-  // Promo Banner
-  promoBanner: {
-    marginHorizontal: 16,
-    marginBottom: 32,
-    padding: 24,
-    backgroundColor: '#1C1C1E',
-    borderRadius: 12,
-  },
-  promoTitle: {
-    color: '#FFFFFF',
-    fontSize: 32,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  promoSubtitle: {
+  emptyStateSubtitle: {
     color: '#8E8E93',
     fontSize: 16,
-    marginBottom: 16,
-  },
-  promoButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FF3B5C',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 24,
-    gap: 8,
-  },
-  promoButtonText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: '700',
   },
   bottomSpacer: {
     height: 160,

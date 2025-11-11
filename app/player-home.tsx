@@ -321,8 +321,10 @@ export default function PlayerHomeScreen() {
       {/* Mini Player */}
       {currentTrack && <MiniPlayer />}
 
-      {/* Mode Carousel */}
-      <ModeCarousel activeMode={createMode} onModeChange={setCreateMode} />
+      {/* Mode Carousel - Only show when modal is active */}
+      {showCreateModal && (
+        <ModeCarousel activeMode={createMode} onModeChange={setCreateMode} />
+      )}
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
@@ -375,6 +377,7 @@ export default function PlayerHomeScreen() {
         visible={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         mode={createMode}
+        onModeChange={setCreateMode}
       />
     </SafeAreaView>
   );

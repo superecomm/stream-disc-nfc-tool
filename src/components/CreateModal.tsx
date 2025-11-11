@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import ModeCarousel from './ModeCarousel';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 48) / 2;
@@ -22,6 +23,7 @@ interface CreateModalProps {
   visible: boolean;
   onClose: () => void;
   mode: CreateMode;
+  onModeChange: (mode: CreateMode) => void;
 }
 
 const contentTypes = [
@@ -97,7 +99,7 @@ const contentTypes = [
   },
 ];
 
-export default function CreateModal({ visible, onClose, mode }: CreateModalProps) {
+export default function CreateModal({ visible, onClose, mode, onModeChange }: CreateModalProps) {
   const router = useRouter();
 
   const handleCardPress = (route: string, type: string, locked: boolean) => {
@@ -217,7 +219,9 @@ export default function CreateModal({ visible, onClose, mode }: CreateModalProps
             <Text style={styles.navLabel}>Library</Text>
           </TouchableOpacity>
 
-          <View style={styles.createButtonPlaceholder} />
+          <View style={styles.createButtonPlaceholder}>
+            {/* Create button placeholder - actual button is in parent */}
+          </View>
 
           <TouchableOpacity style={styles.navButton} activeOpacity={0.6}>
             <Ionicons name="mail-outline" size={24} color="#999999" />
@@ -229,6 +233,9 @@ export default function CreateModal({ visible, onClose, mode }: CreateModalProps
             <Text style={styles.navLabel}>Profile</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Mode Carousel - Positioned above bottom nav */}
+        <ModeCarousel activeMode={mode} onModeChange={onModeChange} />
       </SafeAreaView>
     </Modal>
   );

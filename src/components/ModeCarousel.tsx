@@ -70,12 +70,12 @@ export default function ModeCarousel({ activeMode, onModeChange }: ModeCarouselP
                   end={{ x: 1, y: 1 }}
                   style={styles.activeGradient}
                 >
-                  <Ionicons name={mode.icon as any} size={24} color="#FFFFFF" />
+                  <Ionicons name={mode.icon as any} size={18} color="#FFFFFF" />
                   <Text style={styles.activeLabel}>{mode.label}</Text>
                 </LinearGradient>
               ) : (
                 <View style={styles.inactiveCard}>
-                  <Ionicons name={mode.icon as any} size={20} color="#666666" />
+                  <Ionicons name={mode.icon as any} size={16} color="#666666" />
                   <Text style={styles.inactiveLabel}>{mode.label}</Text>
                 </View>
               )}
@@ -89,15 +89,20 @@ export default function ModeCarousel({ activeMode, onModeChange }: ModeCarouselP
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 12,
+    position: 'absolute',
+    bottom: 80, // Above bottom nav
+    left: 0,
+    right: 0,
+    zIndex: 100,
   },
   scrollContent: {
     paddingHorizontal: 16,
-    gap: 12,
+    gap: 8,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   modeCard: {
-    borderRadius: 24,
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
@@ -105,34 +110,34 @@ const styles = StyleSheet.create({
   modeCardActive: {
     borderColor: 'transparent',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowRadius: 4,
+    elevation: 4,
   },
   activeGradient: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 6,
   },
   activeLabel: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '600',
   },
   inactiveCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     backgroundColor: '#1C1C1E',
-    gap: 6,
+    gap: 4,
   },
   inactiveLabel: {
     color: '#666666',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
   },
 });

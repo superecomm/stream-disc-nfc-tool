@@ -16,9 +16,12 @@ import { useRouter } from 'expo-router';
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 48) / 2;
 
+type CreateMode = 'studio' | 'post' | 'live';
+
 interface CreateModalProps {
   visible: boolean;
   onClose: () => void;
+  mode: CreateMode;
 }
 
 const contentTypes = [
@@ -94,7 +97,7 @@ const contentTypes = [
   },
 ];
 
-export default function CreateModal({ visible, onClose }: CreateModalProps) {
+export default function CreateModal({ visible, onClose, mode }: CreateModalProps) {
   const router = useRouter();
 
   const handleCardPress = (route: string, type: string, locked: boolean) => {
@@ -107,6 +110,69 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
     onClose();
     router.push(route as any);
   };
+
+  const renderStudioContent = () => (
+    <View style={styles.cardsGrid}>
+      {contentTypes.map((type) => (
+        <TouchableOpacity
+          key={type.id}
+          style={styles.cardContainer}
+          onPress={() => handleCardPress(type.route, type.title, type.locked)}
+          activeOpacity={0.7}
+        >
+          <LinearGradient
+            colors={type.gradient as [string, string, ...string[]]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.card}
+          >
+            {type.locked && (
+              <View style={styles.lockBadge}>
+                <Ionicons name="lock-closed" size={16} color="#FFFFFF" />
+              </View>
+            )}
+            <Text style={styles.cardTitle}>{type.title}</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
+  const renderPostContent = () => (
+    <View style={styles.comingSoonContainer}>
+      <Ionicons name="add-circle-outline" size={80} color="#06FFA5" />
+      <Text style={styles.comingSoonTitle}>Create Post</Text>
+      <Text style={styles.comingSoonDescription}>
+        Share your thoughts, music, and moments with your followers. Coming soon!
+      </Text>
+    </View>
+  );
+
+  const renderLiveContent = () => (
+    <View style={styles.comingSoonContainer}>
+      <Ionicons name="radio-outline" size={80} color="#FFD60A" />
+      <Text style={styles.comingSoonTitle}>Go Live</Text>
+      <Text style={styles.comingSoonDescription}>
+        Stream live performances, DJ sets, and connect with your audience in real-time. Coming
+        soon!
+      </Text>
+    </View>
+  );
+
+  const getHeaderTitle = () => {
+    switch (mode) {
+      case 'studio':
+        return { main: 'Stream Disc', sub: 'studio' };
+      case 'post':
+        return { main: 'Create', sub: 'post' };
+      case 'live':
+        return { main: 'Go', sub: 'live' };
+      default:
+        return { main: 'Stream Disc', sub: 'studio' };
+    }
+  };
+
+  const headerTitle = getHeaderTitle();
 
   return (
     <Modal
@@ -122,8 +188,8 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
             <Ionicons name="close" size={28} color="#FFFFFF" />
           </TouchableOpacity>
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>Stream Disc</Text>
-            <Text style={styles.subtitle}>studio</Text>
+            <Text style={styles.title}>{headerTitle.main}</Text>
+            <Text style={styles.subtitle}>{headerTitle.sub}</Text>
           </View>
           <View style={styles.placeholder} />
         </View>
@@ -134,31 +200,35 @@ export default function CreateModal({ visible, onClose }: CreateModalProps) {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.cardsGrid}>
-            {contentTypes.map((type) => (
-              <TouchableOpacity
-                key={type.id}
-                style={styles.cardContainer}
-                onPress={() => handleCardPress(type.route, type.title, type.locked)}
-                activeOpacity={0.7}
-              >
-                <LinearGradient
-                  colors={type.gradient as [string, string, ...string[]]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.card}
-                >
-                  {type.locked && (
-                    <View style={styles.lockBadge}>
-                      <Ionicons name="lock-closed" size={16} color="#FFFFFF" />
-                    </View>
-                  )}
-                  <Text style={styles.cardTitle}>{type.title}</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {mode === 'studio' && renderStudioContent()}
+          {mode === 'post' && renderPostContent()}
+          {mode === 'live' && renderLiveContent()}
         </ScrollView>
+
+        {/* Bottom Navigation (Always visible) */}
+        <View style={styles.bottomNav}>
+          <TouchableOpacity style={styles.navButton} activeOpacity={0.6}>
+            <Ionicons name="home-outline" size={24} color="#999999" />
+            <Text style={styles.navLabel}>Home</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.navButton} activeOpacity={0.6}>
+            <Ionicons name="library-outline" size={24} color="#999999" />
+            <Text style={styles.navLabel}>Library</Text>
+          </TouchableOpacity>
+
+          <View style={styles.createButtonPlaceholder} />
+
+          <TouchableOpacity style={styles.navButton} activeOpacity={0.6}>
+            <Ionicons name="mail-outline" size={24} color="#999999" />
+            <Text style={styles.navLabel}>Inbox</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.navButton} activeOpacity={0.6}>
+            <Ionicons name="person-outline" size={24} color="#999999" />
+            <Text style={styles.navLabel}>Profile</Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     </Modal>
   );
@@ -245,6 +315,53 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
+  },
+  comingSoonContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 80,
+  },
+  comingSoonTitle: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '700',
+    marginTop: 24,
+    marginBottom: 12,
+  },
+  comingSoonDescription: {
+    color: '#8E8E93',
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  // Bottom Navigation
+  bottomNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingVertical: 8,
+    paddingBottom: 20,
+    backgroundColor: '#000000',
+    borderTopWidth: 1,
+    borderTopColor: '#1C1C1E',
+  },
+  navButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    paddingVertical: 4,
+  },
+  navLabel: {
+    fontSize: 11,
+    color: '#999999',
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  createButtonPlaceholder: {
+    width: 56,
+    height: 56,
   },
 });
 

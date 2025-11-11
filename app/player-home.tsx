@@ -20,17 +20,20 @@ import { AdBanner } from '../src/components/AdBanner';
 import AlbumCard from '../src/components/AlbumCard';
 import MiniPlayer from '../src/components/MiniPlayer';
 import CreateModal from '../src/components/CreateModal';
+import ModeCarousel from '../src/components/ModeCarousel';
 import { usePlayer } from '../src/contexts/PlayerContext';
 
 const { width } = Dimensions.get('window');
 
 type MediaTab = 'charts' | 'music' | 'live' | 'podcast' | 'audiobooks';
+type CreateMode = 'studio' | 'post' | 'live';
 
 export default function PlayerHomeScreen() {
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState<MediaTab>('music');
   const [isFreeUser] = useState(true); // For demo, show ads
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createMode, setCreateMode] = useState<CreateMode>('studio');
   const { currentTrack } = usePlayer();
 
   const handleAlbumPress = (albumId: string) => {
@@ -318,6 +321,9 @@ export default function PlayerHomeScreen() {
       {/* Mini Player */}
       {currentTrack && <MiniPlayer />}
 
+      {/* Mode Carousel */}
+      <ModeCarousel activeMode={createMode} onModeChange={setCreateMode} />
+
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
         <TouchableOpacity style={styles.navButton} activeOpacity={0.6}>
@@ -331,11 +337,22 @@ export default function PlayerHomeScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.createButton}
+          style={[
+            styles.createButton,
+            showCreateModal && createMode === 'studio' && styles.createButtonStudio,
+          ]}
           onPress={() => setShowCreateModal(true)}
           activeOpacity={0.8}
         >
-          <Ionicons name="add" size={32} color="#000000" />
+          {showCreateModal && createMode === 'studio' ? (
+            <Ionicons name="flame" size={32} color="#FFFFFF" />
+          ) : showCreateModal && createMode === 'post' ? (
+            <Ionicons name="add-circle" size={32} color="#FFFFFF" />
+          ) : showCreateModal && createMode === 'live' ? (
+            <Ionicons name="radio" size={32} color="#FFFFFF" />
+          ) : (
+            <Ionicons name="add" size={32} color="#000000" />
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.navButton} activeOpacity={0.6}>
@@ -354,7 +371,11 @@ export default function PlayerHomeScreen() {
       </View>
 
       {/* Create Modal */}
-      <CreateModal visible={showCreateModal} onClose={() => setShowCreateModal(false)} />
+      <CreateModal
+        visible={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        mode={createMode}
+      />
     </SafeAreaView>
   );
 }
@@ -540,5 +561,9 @@ const styles = StyleSheet.create({
     elevation: 8,
     borderWidth: 3,
     borderColor: '#000000',
+  },
+  createButtonStudio: {
+    backgroundColor: '#FF3B5C',
+    borderColor: '#FF3B5C',
   },
 });

@@ -178,20 +178,20 @@ export default function AlbumPlayerScreen() {
 
   const handlePlayTrack = async (track: Track, index: number) => {
     if (album) {
-      await playTrack(track, album.tracks, index, album.coverUrl);
+      await playTrack(track, album.tracks, index, album.coverUrl, album.title);
     }
   };
 
   const handlePlayAll = () => {
     if (album && album.tracks.length > 0) {
-      playTrack(album.tracks[0], album.tracks, 0, album.coverUrl);
+      playTrack(album.tracks[0], album.tracks, 0, album.coverUrl, album.title);
     }
   };
 
   const handleShuffle = () => {
     if (album && album.tracks.length > 0) {
       const shuffled = [...album.tracks].sort(() => Math.random() - 0.5);
-      playTrack(shuffled[0], shuffled, 0, album.coverUrl);
+      playTrack(shuffled[0], shuffled, 0, album.coverUrl, album.title);
     }
   };
 

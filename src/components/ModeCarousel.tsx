@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,8 @@ interface ModeCarouselProps {
 }
 
 export default function ModeCarousel({ activeMode, onModeChange }: ModeCarouselProps) {
+  const scrollViewRef = useRef<ScrollView>(null);
+  
   const modes = [
     {
       id: 'studio' as CreateMode,
@@ -30,7 +32,7 @@ export default function ModeCarousel({ activeMode, onModeChange }: ModeCarouselP
     },
     {
       id: 'post' as CreateMode,
-      icon: 'add-circle',
+      icon: 'add',
       label: 'Post',
       color: '#06FFA5',
       gradient: ['#06FFA5', '#3A86FF'],
@@ -39,18 +41,34 @@ export default function ModeCarousel({ activeMode, onModeChange }: ModeCarouselP
       id: 'live' as CreateMode,
       icon: 'radio',
       label: 'Go Live',
-      color: '#FFD60A',
-      gradient: ['#FFD60A', '#FF9F0A'],
+      color: '#FF3B5C',
+      gradient: ['#FF3B5C', '#FF0000'],
     },
   ];
+
+  // Center the active mode button
+  useEffect(() => {
+    const activeIndex = modes.findIndex(mode => mode.id === activeMode);
+    if (activeIndex !== -1 && scrollViewRef.current) {
+      // Calculate position to center the active button
+      const buttonWidth = 100; // Approximate width of button
+      const scrollToX = (activeIndex * (buttonWidth + 8)) - (width / 2) + (buttonWidth / 2);
+      
+      scrollViewRef.current.scrollTo({
+        x: Math.max(0, scrollToX),
+        animated: true,
+      });
+    }
+  }, [activeMode]);
 
   return (
     <View style={styles.container}>
       <ScrollView
+        ref={scrollViewRef}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
-        snapToInterval={width * 0.3}
+        snapToInterval={108} // buttonWidth + gap
         decelerationRate="fast"
       >
         {modes.map((mode) => {

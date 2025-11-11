@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -101,6 +101,33 @@ const contentTypes = [
 
 export default function CreateModal({ visible, onClose, mode, onModeChange }: CreateModalProps) {
   const router = useRouter();
+  const [isLiveRecording, setIsLiveRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+
+  // Timer for live recording
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isLiveRecording) {
+      interval = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      setRecordingTime(0);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isLiveRecording]);
+
+  // Reset recording state when modal closes
+  useEffect(() => {
+    if (!visible) {
+      setIsLiveRecording(false);
+      setRecordingTime(0);
+    }
+  }, [visible]);
 
   const handleCardPress = (route: string, type: string, locked: boolean) => {
     if (locked) {
@@ -160,6 +187,22 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
       </Text>
     </View>
   );
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleButtonPress = () => {
+    if (mode === 'live') {
+      // Toggle recording
+      setIsLiveRecording(!isLiveRecording);
+    } else {
+      // Close modal for other modes
+      onClose();
+    }
+  };
 
   const getHeaderTitle = () => {
     switch (mode) {
@@ -243,16 +286,25 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
             style={[
               styles.floatingCreateButton,
               mode === 'studio' && styles.floatingButtonStudio,
+              mode === 'live' && !isLiveRecording && styles.floatingButtonLiveInactive,
+              mode === 'live' && isLiveRecording && styles.floatingButtonLiveActive,
             ]}
-            onPress={onClose}
+            onPress={handleButtonPress}
             activeOpacity={0.8}
           >
             {mode === 'studio' ? (
               <Ionicons name="flame" size={32} color="#FFFFFF" />
             ) : mode === 'post' ? (
-              <Ionicons name="add-circle" size={32} color="#FFFFFF" />
+              <Ionicons name="add" size={32} color="#000000" />
+            ) : mode === 'live' && isLiveRecording ? (
+              <View style={styles.recordingIndicator}>
+                <View style={styles.recordingDot} />
+                <Text style={styles.recordingTime}>{formatTime(recordingTime)}</Text>
+              </View>
             ) : (
-              <Ionicons name="radio" size={32} color="#FFFFFF" />
+              <View style={styles.liveInactiveIcon}>
+                <Ionicons name="radio" size={28} color="#FF3B5C" />
+              </View>
             )}
           </TouchableOpacity>
         </View>
@@ -417,6 +469,38 @@ const styles = StyleSheet.create({
   floatingButtonStudio: {
     backgroundColor: '#FF3B5C',
     borderColor: '#FF3B5C',
+  },
+  floatingButtonLiveInactive: {
+    backgroundColor: '#FFFFFF',
+    borderColor: '#FF3B5C',
+    borderWidth: 4,
+  },
+  floatingButtonLiveActive: {
+    backgroundColor: '#FF3B5C',
+    borderColor: '#FF0000',
+    borderWidth: 4,
+  },
+  liveInactiveIcon: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  recordingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recordingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
+    marginRight: 8,
+  },
+  recordingTime: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
 });
 

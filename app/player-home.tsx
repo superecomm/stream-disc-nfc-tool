@@ -18,6 +18,8 @@ import { MUSIC_CATEGORIES, PROMOTIONAL_ADS } from '../src/mocks/categories';
 import PromotionalBanner from '../src/components/PromotionalBanner';
 import { AdBanner } from '../src/components/AdBanner';
 import AlbumCard from '../src/components/AlbumCard';
+import MiniPlayer from '../src/components/MiniPlayer';
+import { usePlayer } from '../src/contexts/PlayerContext';
 
 const { width } = Dimensions.get('window');
 
@@ -27,6 +29,7 @@ export default function PlayerHomeScreen() {
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState<MediaTab>('music');
   const [isFreeUser] = useState(true); // For demo, show ads
+  const { currentTrack } = usePlayer();
 
   const handleAlbumPress = (albumId: string) => {
     router.push(`/album/${albumId}` as any);
@@ -310,38 +313,8 @@ export default function PlayerHomeScreen() {
         <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      {/* Mini Player (Mock) */}
-      <View style={styles.miniPlayer}>
-        <Image
-          source={{ uri: ALBUMS[0].coverUrl }}
-          style={styles.miniPlayerArt}
-        />
-        <View style={styles.miniPlayerInfo}>
-          <Text style={styles.miniPlayerTitle} numberOfLines={1}>
-            Neon Nights
-          </Text>
-          <Text style={styles.miniPlayerArtist} numberOfLines={1}>
-            Luna Rey
-          </Text>
-        </View>
-        <View style={styles.miniPlayerControls}>
-          <TouchableOpacity style={styles.miniPlayerButton}>
-            <Ionicons name="play-skip-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.miniPlayerButton}>
-            <Ionicons name="pause" size={28} color="#FFFFFF" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.miniPlayerButton}>
-            <Ionicons name="play-skip-forward" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.miniPlayerButton}>
-            <Ionicons name="chevron-down" size={20} color="#999999" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.miniPlayerButton}>
-            <Ionicons name="close" size={20} color="#999999" />
-          </TouchableOpacity>
-        </View>
-      </View>
+      {/* Mini Player */}
+      {currentTrack && <MiniPlayer />}
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
@@ -521,43 +494,6 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 160,
-  },
-  // Mini Player
-  miniPlayer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#1C1C1E',
-    borderTopWidth: 1,
-    borderTopColor: '#2C2C2E',
-  },
-  miniPlayerArt: {
-    width: 48,
-    height: 48,
-    borderRadius: 4,
-    marginRight: 12,
-  },
-  miniPlayerInfo: {
-    flex: 1,
-  },
-  miniPlayerTitle: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  miniPlayerArtist: {
-    color: '#8E8E93',
-    fontSize: 12,
-  },
-  miniPlayerControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  miniPlayerButton: {
-    padding: 4,
   },
   // Bottom Navigation
   bottomNav: {

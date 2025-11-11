@@ -11,9 +11,9 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { usePlayer } from '../../src/contexts/PlayerContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -142,20 +142,19 @@ export default function AlbumPlayerScreen() {
   const { albumId } = useLocalSearchParams<{ albumId: string }>();
   const [album, setAlbum] = useState<Album | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [currentTrack, setCurrentTrack] = useState<number | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [showDescription, setShowDescription] = useState(false);
   const [scrollY, setScrollY] = useState(0);
 
+  const {
+    currentTrack,
+    isPlaying,
+    playTrack,
+    togglePlayPause,
+  } = usePlayer();
+
   useEffect(() => {
     loadAlbum();
-    return () => {
-      if (sound) {
-        sound.unloadAsync();
-      }
-    };
   }, [albumId]);
 
   const loadAlbum = async () => {
@@ -177,71 +176,22 @@ export default function AlbumPlayerScreen() {
     }
   };
 
-  const playTrack = async (track: Track, index: number) => {
-    try {
-      // Stop current track
-      if (sound) {
-        await sound.unloadAsync();
-      }
-
-      // Load and play new track
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: track.audioUrl },
-        { shouldPlay: true }
-      );
-
-      setSound(newSound);
-      setCurrentTrack(index);
-      setIsPlaying(true);
-
-      // Handle playback status
-      newSound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded && status.didJustFinish) {
-          // Play next track
-          playNextTrack(index);
-        }
-      });
-    } catch (error) {
-      console.error('Error playing track:', error);
-    }
-  };
-
-  const togglePlayPause = async () => {
-    if (sound) {
-      if (isPlaying) {
-        await sound.pauseAsync();
-      } else {
-        await sound.playAsync();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  const playNextTrack = (currentIndex: number) => {
-    if (album && currentIndex < album.tracks.length - 1) {
-      playTrack(album.tracks[currentIndex + 1], currentIndex + 1);
-    } else {
-      setCurrentTrack(null);
-      setIsPlaying(false);
-    }
-  };
-
-  const playPreviousTrack = (currentIndex: number) => {
-    if (album && currentIndex > 0) {
-      playTrack(album.tracks[currentIndex - 1], currentIndex - 1);
+  const handlePlayTrack = async (track: Track, index: number) => {
+    if (album) {
+      await playTrack(track, album.tracks, index);
     }
   };
 
   const handlePlayAll = () => {
     if (album && album.tracks.length > 0) {
-      playTrack(album.tracks[0], 0);
+      playTrack(album.tracks[0], album.tracks, 0);
     }
   };
 
   const handleShuffle = () => {
     if (album && album.tracks.length > 0) {
-      const randomIndex = Math.floor(Math.random() * album.tracks.length);
-      playTrack(album.tracks[randomIndex], randomIndex);
+      const shuffled = [...album.tracks].sort(() => Math.random() - 0.5);
+      playTrack(shuffled[0], shuffled, 0);
     }
   };
 
@@ -367,19 +317,19 @@ export default function AlbumPlayerScreen() {
               key={track.id}
               style={[
                 styles.trackItem,
-                currentTrack === index && styles.trackItemActive,
+                currentTrack?.id === track.id && styles.trackItemActive,
               ]}
-              onPress={() => playTrack(track, index)}
+              onPress={() => handlePlayTrack(track, index)}
               activeOpacity={0.7}
             >
               <View style={styles.trackNumber}>
-                {currentTrack === index && isPlaying ? (
+                {currentTrack?.id === track.id && isPlaying ? (
                   <Ionicons name="volume-medium" size={16} color="#FF3B5C" />
                 ) : (
                   <Text
                     style={[
                       styles.trackNumberText,
-                      currentTrack === index && styles.trackNumberActive,
+                      currentTrack?.id === track.id && styles.trackNumberActive,
                     ]}
                   >
                     {index + 1}
@@ -391,7 +341,7 @@ export default function AlbumPlayerScreen() {
                 <Text
                   style={[
                     styles.trackTitle,
-                    currentTrack === index && styles.trackTitleActive,
+                    currentTrack?.id === track.id && styles.trackTitleActive,
                   ]}
                   numberOfLines={1}
                 >

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useDeepLinking } from '../src/hooks/useDeepLinking';
+import { PlayerProvider } from '../src/contexts/PlayerContext';
 
 // Lazy import services to prevent initialization errors
 let authService: any = null;
@@ -52,30 +53,33 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: '#000000' },
-          animation: 'fade',
-        }}
-      >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="player-home" />
-        <Stack.Screen name="create-album" />
-        <Stack.Screen name="write-nfc" />
-        <Stack.Screen name="success" />
-        <Stack.Screen name="blank-disc" />
-        <Stack.Screen name="dashboard" />
-        <Stack.Screen name="subscription" />
-        <Stack.Screen name="store" />
-        <Stack.Screen name="stream-disc-app" />
-        <Stack.Screen name="admin" />
-        <Stack.Screen name="auth/sign-in" />
-        <Stack.Screen name="auth/sign-up" />
-        <Stack.Screen name="auth/forgot-password" />
-        <Stack.Screen name="album/[albumId]" />
-        <Stack.Screen name="[contentId]" />
-      </Stack>
+      <PlayerProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: '#000000' },
+            animation: 'fade',
+          }}
+        >
+          <Stack.Screen name="index" />
+          <Stack.Screen name="player-home" />
+          <Stack.Screen name="create-album" />
+          <Stack.Screen name="write-nfc" />
+          <Stack.Screen name="success" />
+          <Stack.Screen name="blank-disc" />
+          <Stack.Screen name="dashboard" />
+          <Stack.Screen name="subscription" />
+          <Stack.Screen name="store" />
+          <Stack.Screen name="stream-disc-app" />
+          <Stack.Screen name="admin" />
+          <Stack.Screen name="auth/sign-in" />
+          <Stack.Screen name="auth/sign-up" />
+          <Stack.Screen name="auth/forgot-password" />
+          <Stack.Screen name="album/[albumId]" />
+          <Stack.Screen name="artist/[artistId]" />
+          <Stack.Screen name="[contentId]" />
+        </Stack>
+      </PlayerProvider>
     </>
   );
 }

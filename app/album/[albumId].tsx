@@ -14,128 +14,9 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { usePlayer } from '../../src/contexts/PlayerContext';
+import { findAlbumById, Album, Track } from '../../src/mocks/albums';
 
 const { width, height } = Dimensions.get('window');
-
-type Track = {
-  id: string;
-  title: string;
-  duration: number; // in seconds
-  audioUrl: string;
-};
-
-type Album = {
-  id: string;
-  title: string;
-  artist: string;
-  coverUrl: string;
-  year: number;
-  genre: string;
-  audioQuality: string;
-  description: string;
-  tracks: Track[];
-};
-
-// Mock album data - Midnight Dreams by Luna Rey (from main app)
-const MOCK_ALBUMS: { [key: string]: Album } = {
-  'midnight-dreams': {
-    id: 'midnight-dreams',
-    title: 'Midnight Dreams',
-    artist: 'Luna Rey',
-    coverUrl: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=400&h=400&fit=crop',
-    year: 2024,
-    genre: 'Electronic',
-    audioQuality: 'Lossless',
-    description:
-      'A journey through nocturnal soundscapes and ethereal beats. This album explores the liminal space between waking and dreaming.',
-    tracks: [
-      {
-        id: 't1',
-        title: 'Moonlight Sonata (Reimagined)',
-        duration: 272, // 4:32
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-      },
-      {
-        id: 't2',
-        title: 'Neon Nights',
-        duration: 225, // 3:45
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-      },
-      {
-        id: 't3',
-        title: 'Echo Chamber',
-        duration: 312, // 5:12
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-      },
-      {
-        id: 't4',
-        title: 'Stardust Memories',
-        duration: 258, // 4:18
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
-      },
-      {
-        id: 't5',
-        title: 'Digital Dreams',
-        duration: 236, // 3:56
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
-      },
-      {
-        id: 't6',
-        title: 'Cosmic Lullaby',
-        duration: 383, // 6:23
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
-      },
-    ],
-  },
-  'golden-hour': {
-    id: 'golden-hour',
-    title: 'Golden Hour',
-    artist: 'The Sunset Collective',
-    coverUrl: 'https://images.unsplash.com/photo-1458560871784-56d23406c091?w=400&h=400&fit=crop',
-    year: 2023,
-    genre: 'Indie Pop',
-    audioQuality: 'Lossless',
-    description: 'Capturing the warmth of the golden hour with melodic indie pop sounds.',
-    tracks: [
-      {
-        id: 't1',
-        title: 'Summer Breeze',
-        duration: 245,
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3',
-      },
-      {
-        id: 't2',
-        title: 'Golden Hour',
-        duration: 267,
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3',
-      },
-    ],
-  },
-  'urban-nights': {
-    id: 'urban-nights',
-    title: 'Urban Nights',
-    artist: 'Metro Beats',
-    coverUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop',
-    year: 2024,
-    genre: 'Hip Hop',
-    audioQuality: 'Lossless',
-    description: 'The pulse of the city after dark, captured in beats and rhymes.',
-    tracks: [
-      {
-        id: 't1',
-        title: 'City Lights',
-        duration: 221,
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-      },
-      {
-        id: 't2',
-        title: 'Midnight Run',
-        duration: 198,
-        audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-      },
-    ],
-  },
-};
 
 export default function AlbumPlayerScreen() {
   const router = useRouter();
@@ -164,10 +45,12 @@ export default function AlbumPlayerScreen() {
         return;
       }
 
-      // Load from mock data
-      const mockAlbum = MOCK_ALBUMS[albumId];
-      if (mockAlbum) {
-        setAlbum(mockAlbum);
+      // Load from centralized mock data using findAlbumById
+      const foundAlbum = findAlbumById(albumId);
+      if (foundAlbum) {
+        setAlbum(foundAlbum);
+      } else {
+        console.warn('Album not found:', albumId);
       }
     } catch (error) {
       console.error('Error loading album:', error);
@@ -267,11 +150,11 @@ export default function AlbumPlayerScreen() {
         {/* Album Info */}
         <View style={styles.infoContainer}>
           <Text style={styles.albumTitle}>{album.title}</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push(`/artist/${album.artistId}` as any)}>
             <Text style={styles.artistName}>{album.artist}</Text>
           </TouchableOpacity>
           <Text style={styles.albumMetadata}>
-            {album.genre} · {album.year} · {album.audioQuality}
+            {album.genre} · {album.year} · Lossless
           </Text>
           <Text style={styles.albumSubtext}>
             {album.tracks.length} songs, {totalMinutes} min
@@ -364,13 +247,13 @@ export default function AlbumPlayerScreen() {
         {/* Album Description */}
         <View style={styles.descriptionContainer}>
           <Text style={styles.descriptionDate}>
-            November 6, 2025 • {album.tracks.length} songs, {totalMinutes} min
+            {album.postedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} • {album.tracks.length} songs, {totalMinutes} min
           </Text>
           <Text
             style={styles.descriptionText}
             numberOfLines={showDescription ? undefined : 3}
           >
-            {album.description}
+            A journey through nocturnal soundscapes and ethereal beats. This album explores the liminal space between waking and dreaming.
           </Text>
           <TouchableOpacity onPress={() => setShowDescription(!showDescription)}>
             <Text style={styles.descriptionMore}>

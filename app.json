@@ -10,7 +10,7 @@
     "scheme": "streamdiscplayer",
     "newArchEnabled": false,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/images/stream-disc-logo-white.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },

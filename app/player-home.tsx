@@ -68,15 +68,71 @@ export default function PlayerHomeScreen() {
 
   const renderChartsTab = () => (
     <>
-      {/* Show ads for free users */}
-      {isFreeUser && <AdBanner position="top" />}
+      {/* Billboard Header */}
+      <View style={styles.billboardHeader}>
+        <Text style={styles.billboardTitle}>Stream Disc</Text>
+        <Text style={styles.billboardSubtitle}>WORLD CHARTS</Text>
+      </View>
 
-      {/* Top Charts */}
+      {/* Hot 100 - Top Singles */}
       <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Top Charts</Text>
+        <View style={styles.chartHeader}>
+          <View>
+            <Text style={styles.chartTitle}>Hot 100</Text>
+            <Text style={styles.chartSubtitle}>Top Singles This Week</Text>
+          </View>
           <TouchableOpacity>
-            <Text style={styles.seeAllText}>See All</Text>
+            <Text style={styles.seeAllText}>View All</Text>
+          </TouchableOpacity>
+        </View>
+        
+        {/* Top 10 Singles List */}
+        <View style={styles.chartList}>
+          {ALBUMS.slice(0, 10).map((album, index) => (
+            <TouchableOpacity
+              key={album.id}
+              style={styles.chartItem}
+              onPress={() => handleAlbumPress(album.id)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.chartRank}>
+                <Text style={[
+                  styles.chartRankNumber,
+                  index < 3 && styles.chartRankTop3
+                ]}>
+                  {index + 1}
+                </Text>
+              </View>
+              <Image source={{ uri: album.coverUrl }} style={styles.chartCover} />
+              <View style={styles.chartInfo}>
+                <Text style={styles.chartTrackTitle} numberOfLines={1}>
+                  {album.tracks?.[0]?.title || album.title}
+                </Text>
+                <Text style={styles.chartArtistName} numberOfLines={1}>
+                  {album.artistName}
+                </Text>
+              </View>
+              <View style={styles.chartStats}>
+                <Ionicons name="flame" size={16} color="#FF3B5C" />
+                <Text style={styles.chartPlays}>1.2M</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Show ads for free users */}
+      {isFreeUser && <AdBanner position="inline" />}
+
+      {/* Top Albums */}
+      <View style={styles.section}>
+        <View style={styles.chartHeader}>
+          <View>
+            <Text style={styles.chartTitle}>Top 200 Albums</Text>
+            <Text style={styles.chartSubtitle}>Most Streamed Albums</Text>
+          </View>
+          <TouchableOpacity>
+            <Text style={styles.seeAllText}>View All</Text>
           </TouchableOpacity>
         </View>
         <ScrollView
@@ -84,7 +140,92 @@ export default function PlayerHomeScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.horizontalScroll}
         >
-          {ALBUMS.slice(0, 5).map((album) => (
+          {ALBUMS.slice(0, 10).map((album, index) => (
+            <View key={album.id} style={styles.chartAlbumCard}>
+              <View style={styles.chartAlbumRank}>
+                <Text style={styles.chartAlbumRankText}>#{index + 1}</Text>
+              </View>
+              <AlbumCard
+                album={album}
+                onPress={() => handleAlbumPress(album.id)}
+                size="medium"
+                showBuyButton={false}
+              />
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Genre Charts */}
+      <View style={styles.section}>
+        <View style={styles.chartHeader}>
+          <View>
+            <Text style={styles.chartTitle}>Top by Genre</Text>
+            <Text style={styles.chartSubtitle}>Leading in Each Category</Text>
+          </View>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalScroll}
+        >
+          {['Pop', 'Rock', 'Hip-Hop', 'R&B', 'Country', 'Electronic'].map((genre, index) => (
+            <TouchableOpacity
+              key={genre}
+              style={styles.genreCard}
+              activeOpacity={0.7}
+            >
+              <LinearGradient
+                colors={['#FF006E', '#8338EC', '#3A86FF']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.genreGradient}
+              >
+                <Text style={styles.genreTitle}>{genre}</Text>
+                <View style={styles.genreStats}>
+                  <Ionicons name="trending-up" size={16} color="#06FFA5" />
+                  <Text style={styles.genreStatsText}>+{12 + index}%</Text>
+                </View>
+              </LinearGradient>
+              {ALBUMS[index] && (
+                <View style={styles.genreAlbum}>
+                  <Image 
+                    source={{ uri: ALBUMS[index].coverUrl }} 
+                    style={styles.genreAlbumCover}
+                  />
+                  <Text style={styles.genreAlbumTitle} numberOfLines={1}>
+                    {ALBUMS[index].title}
+                  </Text>
+                  <Text style={styles.genreAlbumArtist} numberOfLines={1}>
+                    {ALBUMS[index].artistName}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Promotional Banner */}
+      <PromotionalBanner ad={PROMOTIONAL_ADS[0]} />
+
+      {/* Most Viewed This Month */}
+      <View style={styles.section}>
+        <View style={styles.chartHeader}>
+          <View>
+            <Text style={styles.chartTitle}>Most Viewed</Text>
+            <Text style={styles.chartSubtitle}>This Month's Favorites</Text>
+          </View>
+          <TouchableOpacity>
+            <Text style={styles.seeAllText}>View All</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalScroll}
+        >
+          {ALBUMS.slice(2, 12).map((album) => (
             <AlbumCard
               key={album.id}
               album={album}
@@ -96,8 +237,33 @@ export default function PlayerHomeScreen() {
         </ScrollView>
       </View>
 
-      {/* Promotional Banner */}
-      <PromotionalBanner ad={PROMOTIONAL_ADS[0]} />
+      {/* Trending Now */}
+      <View style={styles.section}>
+        <View style={styles.chartHeader}>
+          <View style={styles.trendingHeader}>
+            <Ionicons name="flame" size={24} color="#FF3B5C" />
+            <Text style={styles.chartTitle}>Trending Now</Text>
+          </View>
+          <TouchableOpacity>
+            <Text style={styles.seeAllText}>View All</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalScroll}
+        >
+          {ALBUMS.slice(3, 13).map((album) => (
+            <AlbumCard
+              key={album.id}
+              album={album}
+              onPress={() => handleAlbumPress(album.id)}
+              size="medium"
+              showBuyButton={false}
+            />
+          ))}
+        </ScrollView>
+      </View>
     </>
   );
 
@@ -580,5 +746,176 @@ const styles = StyleSheet.create({
   createButtonStudio: {
     backgroundColor: '#FF3B5C',
     borderColor: '#FF3B5C',
+  },
+  // Billboard Charts Styles
+  billboardHeader: {
+    paddingVertical: 32,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: '#FF3B5C',
+    marginBottom: 24,
+  },
+  billboardTitle: {
+    fontSize: 48,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -2,
+    textTransform: 'uppercase',
+  },
+  billboardSubtitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FF3B5C',
+    letterSpacing: 4,
+    marginTop: 4,
+  },
+  chartHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    paddingHorizontal: 16,
+  },
+  chartTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+  },
+  chartSubtitle: {
+    fontSize: 12,
+    color: '#999999',
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  trendingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  chartList: {
+    paddingHorizontal: 16,
+  },
+  chartItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1C1C1E',
+  },
+  chartRank: {
+    width: 40,
+    alignItems: 'center',
+  },
+  chartRankNumber: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#666666',
+  },
+  chartRankTop3: {
+    color: '#FFD60A',
+    fontSize: 22,
+  },
+  chartCover: {
+    width: 50,
+    height: 50,
+    borderRadius: 4,
+    marginRight: 12,
+  },
+  chartInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  chartTrackTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  chartArtistName: {
+    fontSize: 13,
+    color: '#999999',
+  },
+  chartStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  chartPlays: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#999999',
+  },
+  chartAlbumCard: {
+    position: 'relative',
+  },
+  chartAlbumRank: {
+    position: 'absolute',
+    top: -8,
+    left: -8,
+    backgroundColor: '#FF3B5C',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    zIndex: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  chartAlbumRankText: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#FFFFFF',
+  },
+  genreCard: {
+    width: 160,
+    marginRight: 16,
+  },
+  genreGradient: {
+    height: 100,
+    borderRadius: 12,
+    padding: 12,
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  genreTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  genreStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  genreStatsText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#06FFA5',
+  },
+  genreAlbum: {
+    alignItems: 'center',
+  },
+  genreAlbumCover: {
+    width: 140,
+    height: 140,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  genreAlbumTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    width: '100%',
+  },
+  genreAlbumArtist: {
+    fontSize: 11,
+    color: '#999999',
+    textAlign: 'center',
+    marginTop: 2,
   },
 });

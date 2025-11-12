@@ -217,7 +217,7 @@ export const NfcScanModal: React.FC<NfcScanModalProps> = ({
           {/* NFC Animation Area */}
           <View style={styles.animationContainer}>
             {showBlankDiscImage ? (
-              /* Blank Disc Detected - Show image with success animation */
+              /* Blank Disc Detected - Show actual Stream Disc NFC tap image */
               <Animated.View
                 style={[
                   styles.blankDiscContainer,
@@ -227,18 +227,13 @@ export const NfcScanModal: React.FC<NfcScanModalProps> = ({
                   },
                 ]}
               >
-                {/* Stream Disc Visual - Using icons until image is added */}
+                {/* Real Stream Disc NFC Tap Image */}
                 <View style={styles.nfcTapImageContainer}>
-                  <View style={styles.discVisual}>
-                    {/* Stream Disc representation */}
-                    <View style={styles.discIcon}>
-                      <Ionicons name="disc" size={140} color="#06FFA5" />
-                    </View>
-                    {/* NFC waves */}
-                    <View style={styles.nfcWavesOverlay}>
-                      <Ionicons name="wifi" size={50} color="#06FFA5" style={{ opacity: 0.8 }} />
-                    </View>
-                  </View>
+                  <Image
+                    source={require('../../assets/images/nfc-tap.png')}
+                    style={styles.nfcTapImage}
+                    resizeMode="contain"
+                  />
                 </View>
                 {/* Success checkmark overlay */}
                 <View style={styles.successBadge}>
@@ -436,47 +431,9 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
   },
-  discVisual: {
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 200,
-    height: 200,
-  },
-  discIcon: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nfcWavesOverlay: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-  },
   nfcTapImage: {
     width: '100%',
     height: '100%',
-  },
-  nfcTapPlaceholder: {
-    width: 200,
-    height: 200,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  nfcWaves: {
-    position: 'absolute',
-    top: -20,
-    right: 20,
-  },
-  waveIcon: {
-    transform: [{ rotate: '45deg' }],
-  },
-  blankDiscLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#06FFA5',
-    marginTop: 16,
-    textAlign: 'center',
   },
   successBadge: {
     position: 'absolute',

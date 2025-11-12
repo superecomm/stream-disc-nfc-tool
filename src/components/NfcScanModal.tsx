@@ -217,7 +217,7 @@ export const NfcScanModal: React.FC<NfcScanModalProps> = ({
           {/* NFC Animation Area */}
           <View style={styles.animationContainer}>
             {showBlankDiscImage ? (
-              /* Blank Disc Detected - Show static image with success animation */
+              /* Blank Disc Detected - Show actual NFC tap image with success animation */
               <Animated.View
                 style={[
                   styles.blankDiscContainer,
@@ -227,19 +227,17 @@ export const NfcScanModal: React.FC<NfcScanModalProps> = ({
                   },
                 ]}
               >
-                {/* Use the NFC tap image as a placeholder for now */}
+                {/* Actual Stream Disc NFC Tap Image */}
                 <View style={styles.nfcTapImageContainer}>
-                  <View style={styles.nfcTapPlaceholder}>
-                    <Ionicons name="disc-outline" size={120} color="#06FFA5" />
-                    <View style={styles.nfcWaves}>
-                      <Ionicons name="wifi" size={60} color="#06FFA5" style={styles.waveIcon} />
-                    </View>
-                  </View>
-                  <Text style={styles.blankDiscLabel}>Blank Stream Disc</Text>
+                  <Image
+                    source={require('../../assets/images/nfc-tap.png')}
+                    style={styles.nfcTapImage}
+                    resizeMode="contain"
+                  />
                 </View>
-                {/* Success checkmark */}
+                {/* Success checkmark overlay */}
                 <View style={styles.successBadge}>
-                  <Ionicons name="checkmark-circle" size={48} color="#06FFA5" />
+                  <Ionicons name="checkmark-circle" size={64} color="#06FFA5" />
                 </View>
               </Animated.View>
             ) : (
@@ -430,6 +428,12 @@ const styles = StyleSheet.create({
   nfcTapImageContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    width: 300,
+    height: 300,
+  },
+  nfcTapImage: {
+    width: '100%',
+    height: '100%',
   },
   nfcTapPlaceholder: {
     width: 200,
@@ -455,9 +459,13 @@ const styles = StyleSheet.create({
   },
   successBadge: {
     position: 'absolute',
-    top: '50%',
-    right: '25%',
-    transform: [{ translateY: -24 }],
+    top: '30%',
+    right: '20%',
+    shadowColor: '#06FFA5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 8,
   },
   buttonContainer: {
     width: '100%',

@@ -181,11 +181,8 @@ export const NfcScanModal: React.FC<NfcScanModalProps> = ({
 
         {/* Content */}
         <View style={styles.content}>
-          {/* Title */}
-          <Text style={styles.title}>Ready to Scan</Text>
-          <Text style={styles.subtitle}>
-            {statusMessage}
-          </Text>
+          {/* Title - Shows status message */}
+          <Text style={styles.title}>{statusMessage}</Text>
 
           {/* NFC Animation Area */}
           <View style={styles.animationContainer}>
@@ -303,11 +300,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
     color: '#000000',
-    marginBottom: 12,
+    marginBottom: 32,
     letterSpacing: -0.5,
+    textAlign: 'center',
+    lineHeight: 32,
   },
   subtitle: {
     fontSize: 14,

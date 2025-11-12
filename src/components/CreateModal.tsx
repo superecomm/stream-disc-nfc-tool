@@ -179,7 +179,7 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
     console.log('🔥 Starting NFC scan in Studio mode...');
     setShowNfcScanning(true);
     setIsScanning(true);
-    setNfcStatus('Initializing...');
+    setNfcStatus('Ready to Scan');
 
     try {
       // Get current user
@@ -200,22 +200,22 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
       const result = await nfcService.scanStreamDisc(
         (status) => {
           console.log('📱 NFC Status:', status);
-          // Update status messages to be user-friendly
-          let friendlyStatus = status;
+          // Update status messages to be story-like and prominent
+          let storyStatus = status;
           if (status.includes('Initializing')) {
-            friendlyStatus = 'Initializing...';
+            storyStatus = 'Initializing...';
           } else if (status.includes('Waiting')) {
-            friendlyStatus = 'Hold your Stream Disc near the back of your phone.';
-          } else if (status.includes('Reading')) {
-            friendlyStatus = 'Reading Stream Disc...';
+            storyStatus = 'Hold Stream Disc to Phone';
+          } else if (status.includes('Reading tag')) {
+            storyStatus = 'Reading Stream Disc...';
           } else if (status.includes('Parsing')) {
-            friendlyStatus = 'Reading data...';
+            storyStatus = 'Reading Data...';
           } else if (status.includes('Verifying')) {
-            friendlyStatus = 'Verifying authenticity...';
+            storyStatus = 'Verifying Disc...';
           } else if (status.includes('Saving')) {
-            friendlyStatus = 'Saving scan...';
+            storyStatus = 'Saving Scan...';
           }
-          setNfcStatus(friendlyStatus);
+          setNfcStatus(storyStatus);
         },
         user,
         location
@@ -228,21 +228,24 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
         
         if (result.data?.albumId) {
           // Programmed disc - navigate to album
-          setNfcStatus('Stream Disc verified! Opening album...');
+          setNfcStatus('Disc Verified!');
+          setTimeout(() => {
+            setNfcStatus('Opening Album...');
+          }, 500);
           setTimeout(() => {
             setShowNfcScanning(false);
             onClose(); // Close create modal
             router.push(`/album/${result.data.albumId}` as any);
-          }, 1000);
+          }, 1500);
         } else {
-          // Blank disc - show message in subtitle
+          // Blank disc - show message in title
           setIsBlankDisc(true);
-          setNfcStatus('Blank Stream Disc detected. Tap "Program Disc" to add content.');
+          setNfcStatus('Blank Stream Disc Detected');
           // Keep modal open for user to see the message and decide
         }
       } else {
         console.log('❌ NFC Scan failed:', result.error);
-        setNfcStatus(`Error: ${result.error}`);
+        setNfcStatus('Scan Failed');
         setTimeout(() => {
           setShowNfcScanning(false);
           Alert.alert('Scan Failed', result.error || 'Could not read Stream Disc', [
@@ -262,7 +265,7 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
     } catch (error: any) {
       console.error('❌ NFC Scan error:', error);
       setIsScanning(false);
-      setNfcStatus(`Error: ${error.message}`);
+      setNfcStatus('Error Occurred');
       setTimeout(() => {
         setShowNfcScanning(false);
         Alert.alert('Error', error.message || 'An error occurred during scanning', [
@@ -273,9 +276,10 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
   };
 
   const handleProgramDisc = () => {
+    // Just close the NFC modal to return to Studio grid
     setShowNfcScanning(false);
-    onClose();
-    router.push('/create-album');
+    setIsBlankDisc(false);
+    // User can now select Album (or other content type) from the Studio grid
   };
 
   const handleCardPress = (route: string, type: string, locked: boolean) => {

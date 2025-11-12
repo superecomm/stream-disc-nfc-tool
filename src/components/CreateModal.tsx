@@ -9,12 +9,12 @@ import {
   ScrollView,
   Dimensions,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import ModeCarousel from './ModeCarousel';
+import { NfcScanModal } from './NfcScanModal';
 import { nfcService } from '../services/nfc';
 import { authService } from '../services/auth';
 
@@ -166,7 +166,7 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
     console.log('🔥 Starting NFC scan in Studio mode...');
     setShowNfcScanning(true);
     setIsScanning(true);
-    setNfcStatus('Initializing NFC...');
+    setNfcStatus('Initializing...');
 
     try {
       // Get current user
@@ -187,7 +187,22 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
       const result = await nfcService.scanStreamDisc(
         (status) => {
           console.log('📱 NFC Status:', status);
-          setNfcStatus(status);
+          // Update status messages to be user-friendly
+          let friendlyStatus = status;
+          if (status.includes('Initializing')) {
+            friendlyStatus = 'Initializing...';
+          } else if (status.includes('Waiting')) {
+            friendlyStatus = 'Hold your Stream Disc near the back of your phone.';
+          } else if (status.includes('Reading')) {
+            friendlyStatus = 'Reading Stream Disc...';
+          } else if (status.includes('Parsing')) {
+            friendlyStatus = 'Reading data...';
+          } else if (status.includes('Verifying')) {
+            friendlyStatus = 'Verifying authenticity...';
+          } else if (status.includes('Saving')) {
+            friendlyStatus = 'Saving scan...';
+          }
+          setNfcStatus(friendlyStatus);
         },
         user,
         location
@@ -200,7 +215,7 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
         
         if (result.data?.albumId) {
           // Programmed disc - navigate to album
-          setNfcStatus('Disc verified! Opening album...');
+          setNfcStatus('Stream Disc verified! Opening album...');
           setTimeout(() => {
             setShowNfcScanning(false);
             onClose(); // Close create modal
@@ -208,52 +223,57 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
           }, 1000);
         } else {
           // Blank disc - show options
-          setNfcStatus('Blank disc detected');
-          Alert.alert(
-            'Blank Stream Disc',
-            'This is a blank disc. Would you like to program it with an album?',
-            [
-              {
-                text: 'Cancel',
-                style: 'cancel',
-                onPress: () => setShowNfcScanning(false),
-              },
-              {
-                text: 'Program Disc',
-                onPress: () => {
-                  setShowNfcScanning(false);
-                  onClose();
-                  router.push('/create-album');
+          setNfcStatus('Blank Stream Disc detected');
+          setTimeout(() => {
+            setShowNfcScanning(false);
+            Alert.alert(
+              'Blank Stream Disc',
+              'This is a blank disc. Would you like to program it with content?',
+              [
+                {
+                  text: 'Cancel',
+                  style: 'cancel',
                 },
-              },
-            ]
-          );
+                {
+                  text: 'Program Disc',
+                  onPress: () => {
+                    onClose();
+                    router.push('/create-album');
+                  },
+                },
+              ]
+            );
+          }, 500);
         }
       } else {
         console.log('❌ NFC Scan failed:', result.error);
         setNfcStatus(`Error: ${result.error}`);
-        Alert.alert('Scan Failed', result.error || 'Could not read NFC tag', [
-          {
-            text: 'Try Again',
-            onPress: () => {
-              setShowNfcScanning(false);
-              setTimeout(() => handleNfcScan(), 300);
+        setTimeout(() => {
+          setShowNfcScanning(false);
+          Alert.alert('Scan Failed', result.error || 'Could not read Stream Disc', [
+            {
+              text: 'Try Again',
+              onPress: () => {
+                setTimeout(() => handleNfcScan(), 300);
+              },
             },
-          },
-          {
-            text: 'Cancel',
-            style: 'cancel',
-            onPress: () => setShowNfcScanning(false),
-          },
-        ]);
+            {
+              text: 'Cancel',
+              style: 'cancel',
+            },
+          ]);
+        }, 500);
       }
     } catch (error: any) {
       console.error('❌ NFC Scan error:', error);
       setIsScanning(false);
       setNfcStatus(`Error: ${error.message}`);
-      Alert.alert('Error', error.message || 'An error occurred during scanning', [
-        { text: 'OK', onPress: () => setShowNfcScanning(false) },
-      ]);
+      setTimeout(() => {
+        setShowNfcScanning(false);
+        Alert.alert('Error', error.message || 'An error occurred during scanning', [
+          { text: 'OK' },
+        ]);
+      }, 500);
     }
   };
 
@@ -441,53 +461,17 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
         </View>
       </SafeAreaView>
 
-      {/* NFC Scanning Toast Modal */}
-      {showNfcScanning && (
-        <View style={styles.nfcOverlay}>
-          <View style={styles.nfcToast}>
-            <View style={styles.nfcHeader}>
-              <Ionicons name="scan" size={28} color="#06FFA5" />
-              <Text style={styles.nfcTitle}>Scanning NFC</Text>
-              {!isScanning && (
-                <TouchableOpacity 
-                  onPress={() => {
-                    setShowNfcScanning(false);
-                    nfcService.cleanup();
-                  }}
-                  style={styles.nfcCloseButton}
-                >
-                  <Ionicons name="close" size={24} color="#999999" />
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {isScanning && (
-              <View style={styles.nfcAnimation}>
-                <View style={styles.pulsingOrb}>
-                  <View style={styles.orbOuter} />
-                  <View style={styles.orbMiddle} />
-                  <View style={styles.orbInner} />
-                </View>
-                <ActivityIndicator size="large" color="#06FFA5" style={styles.spinner} />
-              </View>
-            )}
-
-            <Text style={styles.nfcStatus}>{nfcStatus}</Text>
-
-            {!isScanning && nfcStatus.includes('Error') && (
-              <TouchableOpacity 
-                style={styles.retryButton}
-                onPress={() => {
-                  setShowNfcScanning(false);
-                  setTimeout(() => handleNfcScan(), 300);
-                }}
-              >
-                <Text style={styles.retryButtonText}>Try Again</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      )}
+      {/* NFC Scanning Modal */}
+      <NfcScanModal
+        visible={showNfcScanning}
+        onClose={() => {
+          setShowNfcScanning(false);
+          nfcService.cleanup();
+        }}
+        mode="read"
+        statusMessage={nfcStatus}
+        isScanning={isScanning}
+      />
     </Modal>
   );
 }
@@ -688,107 +672,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
-  },
-  // NFC Scanning Toast
-  nfcOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    top: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 2000,
-  },
-  nfcToast: {
-    backgroundColor: '#1C1C1E',
-    borderRadius: 20,
-    padding: 24,
-    marginHorizontal: 32,
-    width: width - 64,
-    alignItems: 'center',
-    shadowColor: '#06FFA5',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 16,
-  },
-  nfcHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    marginBottom: 20,
-    position: 'relative',
-  },
-  nfcTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginLeft: 12,
-  },
-  nfcCloseButton: {
-    position: 'absolute',
-    right: 0,
-    top: -4,
-    padding: 4,
-  },
-  nfcAnimation: {
-    width: 120,
-    height: 120,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  pulsingOrb: {
-    width: 120,
-    height: 120,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
-  },
-  orbOuter: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(6, 255, 165, 0.1)',
-    position: 'absolute',
-  },
-  orbMiddle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(6, 255, 165, 0.2)',
-    position: 'absolute',
-  },
-  orbInner: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(6, 255, 165, 0.4)',
-    position: 'absolute',
-  },
-  spinner: {
-    position: 'absolute',
-  },
-  nfcStatus: {
-    fontSize: 16,
-    color: '#999999',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  retryButton: {
-    backgroundColor: '#06FFA5',
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 24,
-    marginTop: 8,
-  },
-  retryButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#000000',
   },
 });
 

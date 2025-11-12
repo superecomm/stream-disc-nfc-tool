@@ -19,6 +19,8 @@ interface NfcScanModalProps {
   onClose: () => void;
   onScan?: () => void;
   mode?: 'read' | 'write';
+  statusMessage?: string;
+  isScanning?: boolean;
 }
 
 export const NfcScanModal: React.FC<NfcScanModalProps> = ({
@@ -26,6 +28,8 @@ export const NfcScanModal: React.FC<NfcScanModalProps> = ({
   onClose,
   onScan,
   mode = 'read',
+  statusMessage = 'Hold your Stream Disc steady near the back of your phone.',
+  isScanning = true,
 }) => {
   const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -162,18 +166,19 @@ export const NfcScanModal: React.FC<NfcScanModalProps> = ({
         {/* Drag Handle */}
         <View style={styles.dragHandle} />
 
-        {/* Close Button */}
-        <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-          <Ionicons name="close" size={24} color="#9A9A9A" />
-        </TouchableOpacity>
+        {/* Close Button - Only show when not actively scanning */}
+        {!isScanning && (
+          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+            <Ionicons name="close" size={24} color="#9A9A9A" />
+          </TouchableOpacity>
+        )}
 
         {/* Content */}
         <View style={styles.content}>
           {/* Title */}
           <Text style={styles.title}>Ready to Scan</Text>
           <Text style={styles.subtitle}>
-            Mode: {mode === 'write' ? 'NFC write' : 'NFC read'} | Hold the NFC tag steady
-            and long enough to your {Platform.OS === 'ios' ? 'iPhone' : 'phone'}.
+            {statusMessage}
           </Text>
 
           {/* NFC Animation Area */}

@@ -441,6 +441,10 @@ const styles = StyleSheet.create({
   },
   // Bottom Navigation
   bottomNav: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
@@ -449,6 +453,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     borderTopWidth: 1,
     borderTopColor: '#1C1C1E',
+    zIndex: 10,
   },
   navButton: {
     alignItems: 'center',

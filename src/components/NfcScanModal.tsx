@@ -21,6 +21,9 @@ interface NfcScanModalProps {
   mode?: 'read' | 'write';
   statusMessage?: string;
   isScanning?: boolean;
+  showActionButton?: boolean;
+  actionButtonText?: string;
+  onActionButtonPress?: () => void;
 }
 
 export const NfcScanModal: React.FC<NfcScanModalProps> = ({
@@ -30,6 +33,9 @@ export const NfcScanModal: React.FC<NfcScanModalProps> = ({
   mode = 'read',
   statusMessage = 'Hold your Stream Disc steady near the back of your phone.',
   isScanning = true,
+  showActionButton = false,
+  actionButtonText = 'Continue',
+  onActionButtonPress,
 }) => {
   const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -217,10 +223,29 @@ export const NfcScanModal: React.FC<NfcScanModalProps> = ({
             </Animated.View>
           </View>
 
-          {/* Cancel Button */}
-          <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
+          {/* Action/Cancel Buttons */}
+          {showActionButton ? (
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity 
+                style={styles.actionButton} 
+                onPress={onActionButtonPress}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.actionButtonText}>{actionButtonText}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.cancelButton} 
+                onPress={handleClose}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </Animated.View>
     </Modal>
@@ -335,6 +360,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
+  },
+  buttonContainer: {
+    width: '100%',
+    gap: 12,
+  },
+  actionButton: {
+    width: '100%',
+    paddingVertical: 16,
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  actionButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   cancelButton: {
     width: '100%',

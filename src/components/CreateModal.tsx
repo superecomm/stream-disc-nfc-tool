@@ -133,6 +133,7 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
   const [showNfcScanning, setShowNfcScanning] = useState(false);
   const [nfcStatus, setNfcStatus] = useState('Initializing...');
   const [isScanning, setIsScanning] = useState(false);
+  const [isBlankDisc, setIsBlankDisc] = useState(false);
 
   // Timer for live recording
   useEffect(() => {
@@ -158,8 +159,20 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
       setRecordingTime(0);
       setShowNfcScanning(false);
       setIsScanning(false);
+      setIsBlankDisc(false);
     }
   }, [visible]);
+
+  // Auto-start NFC scanning when Studio mode is active
+  useEffect(() => {
+    if (visible && mode === 'studio') {
+      // Small delay to let modal animation complete
+      const timer = setTimeout(() => {
+        handleNfcScan();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [visible, mode]);
 
   // Handle NFC scanning for Studio mode
   const handleNfcScan = async () => {
@@ -222,28 +235,10 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
             router.push(`/album/${result.data.albumId}` as any);
           }, 1000);
         } else {
-          // Blank disc - show options
-          setNfcStatus('Blank Stream Disc detected');
-          setTimeout(() => {
-            setShowNfcScanning(false);
-            Alert.alert(
-              'Blank Stream Disc',
-              'This is a blank disc. Would you like to program it with content?',
-              [
-                {
-                  text: 'Cancel',
-                  style: 'cancel',
-                },
-                {
-                  text: 'Program Disc',
-                  onPress: () => {
-                    onClose();
-                    router.push('/create-album');
-                  },
-                },
-              ]
-            );
-          }, 500);
+          // Blank disc - show message in subtitle
+          setIsBlankDisc(true);
+          setNfcStatus('Blank Stream Disc detected. Tap "Program Disc" to add content.');
+          // Keep modal open for user to see the message and decide
         }
       } else {
         console.log('❌ NFC Scan failed:', result.error);
@@ -275,6 +270,12 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
         ]);
       }, 500);
     }
+  };
+
+  const handleProgramDisc = () => {
+    setShowNfcScanning(false);
+    onClose();
+    router.push('/create-album');
   };
 
   const handleCardPress = (route: string, type: string, locked: boolean) => {
@@ -466,11 +467,15 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
         visible={showNfcScanning}
         onClose={() => {
           setShowNfcScanning(false);
+          setIsBlankDisc(false);
           nfcService.cleanup();
         }}
         mode="read"
         statusMessage={nfcStatus}
         isScanning={isScanning}
+        showActionButton={isBlankDisc}
+        actionButtonText="Program Disc"
+        onActionButtonPress={handleProgramDisc}
       />
     </Modal>
   );

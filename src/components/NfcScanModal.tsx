@@ -12,6 +12,7 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { StreamDiscLogo } from './StreamDiscLogo';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -26,6 +27,7 @@ interface NfcScanModalProps {
   actionButtonText?: string;
   onActionButtonPress?: () => void;
   showBlankDiscImage?: boolean;
+  isError?: boolean;
 }
 
 export const NfcScanModal: React.FC<NfcScanModalProps> = ({
@@ -39,6 +41,7 @@ export const NfcScanModal: React.FC<NfcScanModalProps> = ({
   actionButtonText = 'Continue',
   onActionButtonPress,
   showBlankDiscImage = false,
+  isError = false,
 }) => {
   const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -211,6 +214,9 @@ export const NfcScanModal: React.FC<NfcScanModalProps> = ({
 
         {/* Content */}
         <View style={styles.content}>
+          {/* Stream Disc Logo */}
+          <StreamDiscLogo size={60} theme="light" style={styles.logo} />
+          
           {/* Title - Shows status message */}
           <Text style={styles.title}>{statusMessage}</Text>
 
@@ -235,9 +241,13 @@ export const NfcScanModal: React.FC<NfcScanModalProps> = ({
                     resizeMode="contain"
                   />
                 </View>
-                {/* Success checkmark overlay */}
-                <View style={styles.successBadge}>
-                  <Ionicons name="checkmark-circle" size={64} color="#06FFA5" />
+                {/* Success/Error badge overlay */}
+                <View style={[styles.successBadge, isError && styles.errorBadge]}>
+                  {isError ? (
+                    <Ionicons name="close-circle" size={64} color="#FF3B5C" />
+                  ) : (
+                    <Ionicons name="checkmark-circle" size={64} color="#06FFA5" />
+                  )}
                 </View>
               </Animated.View>
             ) : (
@@ -358,6 +368,9 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     alignItems: 'center',
   },
+  logo: {
+    marginBottom: 16,
+  },
   title: {
     fontSize: 24,
     fontWeight: '700',
@@ -444,6 +457,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 8,
     elevation: 8,
+  },
+  errorBadge: {
+    shadowColor: '#FF3B5C',
   },
   buttonContainer: {
     width: '100%',

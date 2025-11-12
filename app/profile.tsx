@@ -147,14 +147,16 @@ export default function ProfileScreen() {
       >
         {/* Profile Header */}
         <View style={styles.profileHeader}>
-          <Image
-            source={
-              user.photoURL
-                ? { uri: user.photoURL }
-                : require('../assets/images/default-avatar.png')
-            }
-            style={styles.profileImage}
-          />
+          {user.photoURL ? (
+            <Image
+              source={{ uri: user.photoURL }}
+              style={styles.profileImage}
+            />
+          ) : (
+            <View style={[styles.profileImage, styles.profileImagePlaceholder]}>
+              <Ionicons name="person" size={48} color="#666666" />
+            </View>
+          )}
           <Text style={styles.profileName}>{user.displayName || 'Music Lover'}</Text>
           <Text style={styles.profileEmail}>{user.email}</Text>
 
@@ -326,6 +328,10 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     marginBottom: 16,
     backgroundColor: '#1C1C1E',
+  },
+  profileImagePlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   profileName: {
     fontSize: 24,

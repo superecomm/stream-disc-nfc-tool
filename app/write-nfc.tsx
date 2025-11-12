@@ -7,20 +7,22 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
-  Platform,
+  Image,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { nfcService } from '../src/services/nfc';
 import { firestoreService } from '../src/services/firestore';
-import { nfcVerificationService } from '../src/services/nfcVerification';
+import { StreamDiscLogo } from '../src/components/StreamDiscLogo';
 
 export default function WriteNfcScreen() {
   const router = useRouter();
   const { contentId } = useLocalSearchParams<{ contentId: string }>();
   const [isScanning, setIsScanning] = useState(false);
   const [isWriting, setIsWriting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('Hold your Stream Disc steady near the back of your phone.');
   const [nfcSupported, setNfcSupported] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     initializeNfc();
@@ -36,7 +38,6 @@ export default function WriteNfcScreen() {
 
       if (!supported) {
         console.log('NFC not supported - running in dev/test mode');
-        // Don't block in dev mode, just log
       }
     } catch (error) {
       console.log('NFC initialization failed (expected in dev mode):', error);
@@ -52,47 +53,14 @@ export default function WriteNfcScreen() {
 
     setIsScanning(true);
     setIsWriting(false);
+    setStatusMessage('Initializing...');
 
     try {
-      // In dev mode, simulate successful verification and write
-      if (!nfcSupported) {
-        console.log('DEV MODE: Simulating NFC verification and write for content:', contentId);
-        
-        // Simulate verification
-        const verification = await nfcVerificationService.simulateScanAndVerify(true);
-        
-        if (!verification.isValid) {
-          Alert.alert('Not a Stream Disc', verification.message);
-          setIsScanning(false);
-          return;
-        }
-
-        Alert.alert('Verified!', `${verification.message}\nSerial: ${verification.serialNumber}`);
-        
-        setIsWriting(true);
-        // Simulate write delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Create mock NFC data
-        const mockDiscUID = verification.discData?.uid || `DEV-${Date.now()}`;
-        const mockNonce = Math.random().toString(36).substring(7);
-        const mockUrl = `https://stream-disc.web.app/a/${contentId}?d=${mockDiscUID}&n=${mockNonce}`;
-        
-        // Update Firestore
-        await firestoreService.updateNfcInfo(contentId, mockUrl, mockDiscUID, mockNonce);
-        
-        // Update disc programming status
-        await firestoreService.updateDiscProgrammingStatus(mockDiscUID, true);
-        
-        // Navigate to success
-        router.push({
-          pathname: '/success',
-          params: { contentId, url: mockUrl },
-        });
-        return;
-      }
-
-      // Real NFC flow with verification
+      // DEMO MODE: Skip Stream Disc verification, write to ANY NFC tag
+      console.log('DEMO MODE: Writing to any NFC tag for content:', contentId);
+      
+      setStatusMessage('Hold your Stream Disc near the back of your phone...');
+      
       // Check if NFC is enabled
       const isEnabled = await nfcService.isEnabled();
       if (!isEnabled) {
@@ -105,48 +73,52 @@ export default function WriteNfcScreen() {
         return;
       }
 
-      // Step 1: Scan and verify the disc
-      const verification = await nfcVerificationService.scanAndVerify();
-      
-      if (!verification.isValid) {
-        // Not a valid Stream Disc - stop here
-        setIsScanning(false);
-        return;
-      }
-
-      // Step 2: Write content to the verified disc
+      // Direct write - no verification required for demo
       setIsWriting(true);
+      setStatusMessage('Writing to Stream Disc...');
       
-      const discUID = verification.discData!.uid;
+      // Generate URL
+      const mockDiscUID = `DEMO-${Date.now()}`;
       const nonce = Math.random().toString(36).substring(7);
-      const url = `https://stream-disc.web.app/a/${contentId}?d=${discUID}&n=${nonce}`;
+      const url = `https://stream-disc.web.app/a/${contentId}?d=${mockDiscUID}&n=${nonce}`;
 
-      // Write to NFC using the existing nfcService method
+      // Write to NFC tag
       await nfcService.writeUrl(url);
+      
+      setStatusMessage('Saving...');
 
       // Update Firestore
-      await firestoreService.updateNfcInfo(contentId, url, discUID, nonce);
-      
-      // Mark disc as programmed
-      await firestoreService.updateDiscProgrammingStatus(discUID, true);
+      await firestoreService.updateNfcInfo(contentId, url, mockDiscUID, nonce);
+      await firestoreService.updateDiscProgrammingStatus(mockDiscUID, true);
 
+      // Show success
+      setShowSuccess(true);
+      setStatusMessage('Stream Disc Programmed!');
+      
       // Navigate to success screen
-      router.push({
-        pathname: '/success',
-        params: { contentId, url },
-      });
+      setTimeout(() => {
+        router.push({
+          pathname: '/success',
+          params: { contentId, url },
+        });
+      }, 1500);
+
     } catch (error: any) {
       console.error('Error writing to NFC:', error);
       
       if (error.message?.includes('cancelled') || error.message?.includes('canceled')) {
-        // User canceled, just reset state
         setIsScanning(false);
         setIsWriting(false);
+        setStatusMessage('Hold your Stream Disc steady near the back of your phone.');
       } else {
         Alert.alert(
-          'Error',
+          'Write Failed',
           'Failed to write to NFC tag. Please try again.',
-          [{ text: 'OK', onPress: () => setIsScanning(false) }]
+          [{ text: 'OK', onPress: () => {
+            setIsScanning(false);
+            setIsWriting(false);
+            setStatusMessage('Hold your Stream Disc steady near the back of your phone.');
+          }}]
         );
       }
     }
@@ -156,52 +128,61 @@ export default function WriteNfcScreen() {
     await nfcService.cancelOperation();
     setIsScanning(false);
     setIsWriting(false);
+    setShowSuccess(false);
+    setStatusMessage('Hold your Stream Disc steady near the back of your phone.');
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* NFC Icon */}
-        <View style={styles.nfcIconContainer}>
-          <View style={styles.nfcCircle}>
-            <View style={styles.nfcWaveContainer}>
-              <View style={[styles.nfcWave, styles.nfcWave1]} />
-              <View style={[styles.nfcWave, styles.nfcWave2]} />
-              <View style={[styles.nfcWave, styles.nfcWave3]} />
-            </View>
-          </View>
+      {/* White Modal Container */}
+      <View style={styles.modal}>
+        {/* Stream Disc Logo */}
+        <View style={styles.logoContainer}>
+          <StreamDiscLogo size={60} theme="light" />
         </View>
 
         {/* Title */}
-        <Text style={styles.title}>Ready to Scan</Text>
+        <Text style={styles.title}>{showSuccess ? 'Success!' : statusMessage}</Text>
 
-        {/* Instructions */}
-        <Text style={styles.instructions}>
-          Mode: NFC write | Hold the NFC tag steady and long enough to your{' '}
-          {Platform.OS === 'ios' ? 'iPhone' : 'phone'}.
-        </Text>
-
-        {/* Status */}
-        {isWriting && (
-          <View style={styles.statusContainer}>
-            <ActivityIndicator size="large" color="#06FFA5" />
-            <Text style={styles.statusText}>Writing to tag...</Text>
-          </View>
-        )}
-
-        {/* Phone Icon */}
-        {!isWriting && (
-          <View style={styles.phoneIconContainer}>
-            <View style={styles.phoneCircle}>
-              <View style={styles.phoneIcon}>
-                <View style={styles.phoneNotch} />
+        {/* NFC Visualization */}
+        <View style={styles.visualContainer}>
+          {showSuccess ? (
+            /* Success State */
+            <View style={styles.successContainer}>
+              <Image
+                source={require('../assets/images/nfc-tap.png')}
+                style={styles.nfcImage}
+                resizeMode="contain"
+              />
+              <View style={styles.successBadge}>
+                <Ionicons name="checkmark-circle" size={64} color="#06FFA5" />
               </View>
             </View>
+          ) : (
+            /* Scanning State */
+            <>
+              <View style={styles.nfcCircle}>
+                <Ionicons name="wifi" size={80} color="#3A86FF" />
+              </View>
+              <View style={styles.phoneContainer}>
+                <View style={styles.phone}>
+                  <View style={styles.phoneNotch} />
+                </View>
+              </View>
+            </>
+          )}
+        </View>
+
+        {/* Status Text */}
+        {isWriting && !showSuccess && (
+          <View style={styles.statusContainer}>
+            <ActivityIndicator size="small" color="#06FFA5" />
+            <Text style={styles.statusText}>Writing...</Text>
           </View>
         )}
 
-        {/* Scan Button or Cancel Button */}
-        {!isScanning ? (
+        {/* Action Button */}
+        {!isScanning && !showSuccess && (
           <TouchableOpacity
             style={styles.scanButton}
             onPress={handleScan}
@@ -209,7 +190,9 @@ export default function WriteNfcScreen() {
           >
             <Text style={styles.scanButtonText}>Start Scanning</Text>
           </TouchableOpacity>
-        ) : (
+        )}
+
+        {isScanning && !showSuccess && (
           <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </TouchableOpacity>
@@ -222,95 +205,66 @@ export default function WriteNfcScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  nfcIconContainer: {
-    marginBottom: 40,
-  },
-  nfcCircle: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: '#0A4D8C',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 24,
   },
-  nfcWaveContainer: {
-    position: 'relative',
-    width: 80,
-    height: 80,
+  modal: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 32,
+    width: '100%',
+    maxWidth: 400,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  nfcWave: {
-    position: 'absolute',
-    borderRadius: 40,
-    borderWidth: 4,
-    borderColor: '#B8A389',
-  },
-  nfcWave1: {
-    width: 80,
-    height: 20,
-    top: 10,
-    left: 0,
-  },
-  nfcWave2: {
-    width: 60,
-    height: 16,
-    top: 25,
-    left: 10,
-  },
-  nfcWave3: {
-    width: 40,
-    height: 12,
-    top: 35,
-    left: 20,
+  logoContainer: {
+    marginBottom: 24,
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 24,
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#000000',
     textAlign: 'center',
+    marginBottom: 32,
+    letterSpacing: -0.5,
   },
-  instructions: {
-    fontSize: 16,
-    color: '#999999',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 40,
-  },
-  statusContainer: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  statusText: {
-    fontSize: 16,
-    color: '#06FFA5',
-    marginTop: 16,
-  },
-  phoneIconContainer: {
-    marginBottom: 60,
-  },
-  phoneCircle: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    borderWidth: 4,
-    borderColor: '#3A86FF',
+  visualContainer: {
+    width: 250,
+    height: 250,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 32,
+    position: 'relative',
   },
-  phoneIcon: {
+  nfcCircle: {
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: '#E3F2FD',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  phoneContainer: {
+    alignItems: 'center',
+  },
+  phone: {
     width: 80,
-    height: 120,
+    height: 140,
     backgroundColor: '#3A86FF',
     borderRadius: 12,
     position: 'relative',
+    shadowColor: '#3A86FF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   phoneNotch: {
     width: 40,
@@ -321,29 +275,66 @@ const styles = StyleSheet.create({
     top: 8,
     left: 20,
   },
+  successContainer: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  nfcImage: {
+    width: 200,
+    height: 200,
+  },
+  successBadge: {
+    position: 'absolute',
+    top: '30%',
+    right: '20%',
+    shadowColor: '#06FFA5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 24,
+  },
+  statusText: {
+    fontSize: 14,
+    color: '#666666',
+    fontWeight: '500',
+  },
   scanButton: {
     backgroundColor: '#06FFA5',
     paddingVertical: 16,
     paddingHorizontal: 48,
     borderRadius: 12,
-    marginTop: 20,
+    width: '100%',
+    alignItems: 'center',
   },
   scanButtonText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#000000',
+    letterSpacing: -0.2,
   },
   cancelButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#F5F5F5',
     paddingVertical: 16,
-    paddingHorizontal: 64,
+    paddingHorizontal: 48,
     borderRadius: 12,
-    marginTop: 20,
+    width: '100%',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   cancelButtonText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#666666',
+    letterSpacing: -0.2,
   },
 });
-

@@ -20,7 +20,6 @@ import { authService } from '../src/services/auth';
 import { storageService } from '../src/services/storage';
 import { firestoreService } from '../src/services/firestore';
 import { AdBanner } from '../src/components/AdBanner';
-import { BottomNav } from '../src/components/BottomNav';
 
 interface AudioFile {
   uri: string;
@@ -527,11 +526,24 @@ export default function CreateAlbumScreen() {
         </View>
       </Modal>
 
-      {/* Bottom Navigation */}
-      <BottomNav
-        onBurnPress={handleCreateAlbum}
-        isScanning={isUploading}
-      />
+      {/* Floating Burn Button */}
+      {audioFiles.length > 0 && albumTitle.trim() && artistName.trim() && (
+        <TouchableOpacity
+          style={styles.floatingBurnButton}
+          onPress={handleCreateAlbum}
+          disabled={isUploading}
+          activeOpacity={0.8}
+        >
+          {isUploading ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <>
+              <Ionicons name="flame" size={28} color="#FFFFFF" />
+              <Text style={styles.floatingBurnText}>Burn to Disc</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }
@@ -886,6 +898,30 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#000000',
+  },
+  floatingBurnButton: {
+    position: 'absolute',
+    bottom: 32,
+    right: 24,
+    left: 24,
+    backgroundColor: '#FF3B5C',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 16,
+    gap: 12,
+    shadowColor: '#FF3B5C',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  floatingBurnText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
   },
 });
 

@@ -408,12 +408,26 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
 
         {/* Bottom Navigation (Always visible) */}
         <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navButton} activeOpacity={0.6}>
+          <TouchableOpacity 
+            style={styles.navButton} 
+            activeOpacity={0.6}
+            onPress={() => {
+              onClose();
+              router.push('/player-home');
+            }}
+          >
             <Ionicons name="home-outline" size={24} color="#999999" />
             <Text style={styles.navLabel}>Home</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.navButton} activeOpacity={0.6}>
+          <TouchableOpacity 
+            style={styles.navButton} 
+            activeOpacity={0.6}
+            onPress={() => {
+              onClose();
+              router.push('/library');
+            }}
+          >
             <Ionicons name="library-outline" size={24} color="#999999" />
             <Text style={styles.navLabel}>Library</Text>
           </TouchableOpacity>
@@ -422,12 +436,26 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
             {/* Create button placeholder - actual button is in parent */}
           </View>
 
-          <TouchableOpacity style={styles.navButton} activeOpacity={0.6}>
+          <TouchableOpacity 
+            style={styles.navButton} 
+            activeOpacity={0.6}
+            onPress={() => {
+              onClose();
+              router.push('/inbox');
+            }}
+          >
             <Ionicons name="mail-outline" size={24} color="#999999" />
             <Text style={styles.navLabel}>Inbox</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.navButton} activeOpacity={0.6}>
+          <TouchableOpacity 
+            style={styles.navButton} 
+            activeOpacity={0.6}
+            onPress={() => {
+              onClose();
+              router.push('/profile');
+            }}
+          >
             <Ionicons name="person-outline" size={24} color="#999999" />
             <Text style={styles.navLabel}>Profile</Text>
           </TouchableOpacity>

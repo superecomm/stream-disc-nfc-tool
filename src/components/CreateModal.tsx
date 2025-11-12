@@ -508,6 +508,7 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
         showActionButton={isBlankDisc}
         actionButtonText="Program Disc"
         onActionButtonPress={handleProgramDisc}
+        showBlankDiscImage={isBlankDisc}
       />
     </Modal>
   );

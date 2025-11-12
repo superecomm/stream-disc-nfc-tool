@@ -9,6 +9,7 @@ import {
   Dimensions,
   PanResponder,
   Platform,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -24,6 +25,7 @@ interface NfcScanModalProps {
   showActionButton?: boolean;
   actionButtonText?: string;
   onActionButtonPress?: () => void;
+  showBlankDiscImage?: boolean;
 }
 
 export const NfcScanModal: React.FC<NfcScanModalProps> = ({
@@ -36,10 +38,13 @@ export const NfcScanModal: React.FC<NfcScanModalProps> = ({
   showActionButton = false,
   actionButtonText = 'Continue',
   onActionButtonPress,
+  showBlankDiscImage = false,
 }) => {
   const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const phoneAnim = useRef(new Animated.Value(0)).current;
+  const successScale = useRef(new Animated.Value(0)).current;
+  const successOpacity = useRef(new Animated.Value(0)).current;
 
   // Pan responder for swipe down gesture
   const panResponder = useRef(
@@ -77,12 +82,20 @@ export const NfcScanModal: React.FC<NfcScanModalProps> = ({
         tension: 50,
         friction: 8,
       }).start();
-      startAnimations();
+      if (!showBlankDiscImage) {
+        startAnimations();
+      } else {
+        // Show success animation for blank disc
+        startSuccessAnimation();
+      }
     } else {
       translateY.setValue(SCREEN_HEIGHT);
       stopAnimations();
+      // Reset success animation
+      successScale.setValue(0);
+      successOpacity.setValue(0);
     }
-  }, [visible]);
+  }, [visible, showBlankDiscImage]);
 
   // Pulsing animation for the NFC orb
   const startAnimations = () => {
@@ -123,6 +136,23 @@ export const NfcScanModal: React.FC<NfcScanModalProps> = ({
   const stopAnimations = () => {
     pulseAnim.stopAnimation();
     phoneAnim.stopAnimation();
+  };
+
+  const startSuccessAnimation = () => {
+    // Success pop animation
+    Animated.parallel([
+      Animated.spring(successScale, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.timing(successOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
   const handleClose = () => {
@@ -186,38 +216,69 @@ export const NfcScanModal: React.FC<NfcScanModalProps> = ({
 
           {/* NFC Animation Area */}
           <View style={styles.animationContainer}>
-            {/* Pulsing NFC Orb (Background) */}
-            <Animated.View
-              style={[
-                styles.nfcOrb,
-                {
-                  transform: [{ scale: pulseAnim }],
-                  opacity: pulseAnim.interpolate({
-                    inputRange: [1, 1.3],
-                    outputRange: [0.3, 0],
-                  }),
-                },
-              ]}
-            />
+            {showBlankDiscImage ? (
+              /* Blank Disc Detected - Show static image with success animation */
+              <Animated.View
+                style={[
+                  styles.blankDiscContainer,
+                  {
+                    transform: [{ scale: successScale }],
+                    opacity: successOpacity,
+                  },
+                ]}
+              >
+                {/* Use the NFC tap image as a placeholder for now */}
+                <View style={styles.nfcTapImageContainer}>
+                  <View style={styles.nfcTapPlaceholder}>
+                    <Ionicons name="disc-outline" size={120} color="#06FFA5" />
+                    <View style={styles.nfcWaves}>
+                      <Ionicons name="wifi" size={60} color="#06FFA5" style={styles.waveIcon} />
+                    </View>
+                  </View>
+                  <Text style={styles.blankDiscLabel}>Blank Stream Disc</Text>
+                </View>
+                {/* Success checkmark */}
+                <View style={styles.successBadge}>
+                  <Ionicons name="checkmark-circle" size={48} color="#06FFA5" />
+                </View>
+              </Animated.View>
+            ) : (
+              /* Normal Scanning Animation */
+              <>
+                {/* Pulsing NFC Orb (Background) */}
+                <Animated.View
+                  style={[
+                    styles.nfcOrb,
+                    {
+                      transform: [{ scale: pulseAnim }],
+                      opacity: pulseAnim.interpolate({
+                        inputRange: [1, 1.3],
+                        outputRange: [0.3, 0],
+                      }),
+                    },
+                  ]}
+                />
 
-            {/* Static NFC Orb */}
-            <View style={styles.nfcOrbStatic}>
-              <Ionicons name="wifi" size={60} color="rgba(255, 255, 255, 0.3)" />
-            </View>
+                {/* Static NFC Orb */}
+                <View style={styles.nfcOrbStatic}>
+                  <Ionicons name="wifi" size={60} color="rgba(255, 255, 255, 0.3)" />
+                </View>
 
-            {/* Phone Animation */}
-            <Animated.View
-              style={[
-                styles.phoneContainer,
-                {
-                  transform: [{ translateY: phoneTranslateY }],
-                },
-              ]}
-            >
-              <View style={styles.phoneIcon}>
-                <Ionicons name="phone-portrait-outline" size={80} color="#007AFF" />
-              </View>
-            </Animated.View>
+                {/* Phone Animation */}
+                <Animated.View
+                  style={[
+                    styles.phoneContainer,
+                    {
+                      transform: [{ translateY: phoneTranslateY }],
+                    },
+                  ]}
+                >
+                  <View style={styles.phoneIcon}>
+                    <Ionicons name="phone-portrait-outline" size={80} color="#007AFF" />
+                  </View>
+                </Animated.View>
+              </>
+            )}
           </View>
 
           {/* Action/Cancel Buttons */}
@@ -359,6 +420,44 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
+  },
+  blankDiscContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  nfcTapImageContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nfcTapPlaceholder: {
+    width: 200,
+    height: 200,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  nfcWaves: {
+    position: 'absolute',
+    top: -20,
+    right: 20,
+  },
+  waveIcon: {
+    transform: [{ rotate: '45deg' }],
+  },
+  blankDiscLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#06FFA5',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  successBadge: {
+    position: 'absolute',
+    top: '50%',
+    right: '25%',
+    transform: [{ translateY: -24 }],
   },
   buttonContainer: {
     width: '100%',

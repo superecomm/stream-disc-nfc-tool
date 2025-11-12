@@ -20,7 +20,6 @@ import { authService } from '../src/services/auth';
 import { storageService } from '../src/services/storage';
 import { firestoreService } from '../src/services/firestore';
 import { AdBanner } from '../src/components/AdBanner';
-import { NfcScanModal } from '../src/components/NfcScanModal';
 import { BottomNav } from '../src/components/BottomNav';
 
 interface AudioFile {
@@ -42,8 +41,6 @@ export default function CreateAlbumScreen() {
   const [publishToStore, setPublishToStore] = useState(false);
   const [storePrice, setStorePrice] = useState('');
   const [showPublishModal, setShowPublishModal] = useState(false);
-  const [showNfcModal, setShowNfcModal] = useState(false);
-  const [createdDiscId, setCreatedDiscId] = useState<string | null>(null);
 
   React.useEffect(() => {
     async function checkPremiumStatus() {
@@ -243,25 +240,16 @@ export default function CreateAlbumScreen() {
         await firestoreService.updateStorageUsage(userId, totalSize);
       }
 
-      // Store the disc ID and show NFC modal
-      setCreatedDiscId(discId);
-      setShowNfcModal(true);
+      // Navigate DIRECTLY to write-nfc screen to burn the album
+      router.push({
+        pathname: '/write-nfc',
+        params: { contentId: discId },
+      });
     } catch (error) {
       console.error('Error creating album:', error);
       Alert.alert('Error', 'Failed to create album. Please try again.');
     } finally {
       setIsUploading(false);
-    }
-  };
-
-  const handleNfcScanComplete = () => {
-    setShowNfcModal(false);
-    if (createdDiscId) {
-      // Navigate to write-nfc screen with the disc ID
-      router.push({
-        pathname: '/write-nfc',
-        params: { contentId: createdDiscId },
-      });
     }
   };
 
@@ -539,18 +527,10 @@ export default function CreateAlbumScreen() {
         </View>
       </Modal>
 
-      {/* NFC Scan Modal */}
-      <NfcScanModal
-        visible={showNfcModal}
-        onClose={() => setShowNfcModal(false)}
-        onScan={handleNfcScanComplete}
-        mode="write"
-      />
-
       {/* Bottom Navigation */}
       <BottomNav
         onBurnPress={handleCreateAlbum}
-        isScanning={showNfcModal || isUploading}
+        isScanning={isUploading}
       />
     </SafeAreaView>
   );

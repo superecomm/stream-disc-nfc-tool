@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { usePlayer } from '../../src/contexts/PlayerContext';
 import { findAlbumById, Album, Track } from '../../src/mocks/albums';
+import MiniPlayer from '../../src/components/MiniPlayer';
 
 const { width, height } = Dimensions.get('window');
 
@@ -265,6 +266,56 @@ export default function AlbumPlayerScreen() {
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
+
+      {/* Mini Player */}
+      {currentTrack && <MiniPlayer />}
+
+      {/* Bottom Navigation */}
+      <View style={styles.bottomNav}>
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => router.push('/player-home')}
+          activeOpacity={0.6}
+        >
+          <Ionicons name="home-outline" size={24} color="#999999" />
+          <Text style={styles.navLabel}>Home</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => router.push('/library')}
+          activeOpacity={0.6}
+        >
+          <Ionicons name="library-outline" size={24} color="#999999" />
+          <Text style={styles.navLabel}>Library</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.createButton}
+          onPress={() => router.push('/create-album')}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="add" size={32} color="#000000" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => router.push('/inbox')}
+          activeOpacity={0.6}
+        >
+          <Ionicons name="mail-outline" size={24} color="#999999" />
+          <Text style={styles.navLabel}>Inbox</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navButton}
+          onPress={() => router.push('/profile')}
+          activeOpacity={0.6}
+        >
+          <Ionicons name="person-outline" size={24} color="#999999" />
+          <Text style={styles.navLabel}>Profile</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -485,6 +536,49 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
   },
   bottomSpacer: {
-    height: 100,
+    height: 180,
+  },
+  // Bottom Navigation
+  bottomNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingVertical: 8,
+    paddingBottom: 20,
+    backgroundColor: '#000000',
+    borderTopWidth: 1,
+    borderTopColor: '#1C1C1E',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  navButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    paddingVertical: 4,
+  },
+  navLabel: {
+    fontSize: 11,
+    color: '#999999',
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  createButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: -20,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    borderWidth: 3,
+    borderColor: '#000000',
   },
 });

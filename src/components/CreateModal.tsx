@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 40,
+    paddingBottom: 200,
   },
   cardsGrid: {
     flexDirection: 'row',

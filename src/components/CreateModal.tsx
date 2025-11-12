@@ -97,6 +97,27 @@ const contentTypes = [
     route: '/create-album',
     locked: true,
   },
+  {
+    id: 'familyphotos',
+    title: 'Family Photos',
+    gradient: ['#FFBA08', '#06FFA5'],
+    route: '/create-album',
+    locked: true,
+  },
+  {
+    id: 'christmas',
+    title: 'Christmas',
+    gradient: ['#C1121F', '#2D6A4F'],
+    route: '/create-album',
+    locked: true,
+  },
+  {
+    id: 'create',
+    title: 'Create',
+    gradient: ['#FF006E', '#FFBE0B'],
+    route: '/create-album',
+    locked: true,
+  },
 ];
 
 export default function CreateModal({ visible, onClose, mode, onModeChange }: CreateModalProps) {
@@ -153,11 +174,11 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
             colors={type.gradient as [string, string, ...string[]]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.card}
+            style={[styles.card, type.locked && styles.cardLocked]}
           >
             {type.locked && (
               <View style={styles.lockBadge}>
-                <Ionicons name="lock-closed" size={16} color="#FFFFFF" />
+                <Ionicons name="lock-closed" size={14} color="#FFFFFF" />
               </View>
             )}
             <Text style={styles.cardTitle}>{type.title}</Text>
@@ -363,7 +384,7 @@ const styles = StyleSheet.create({
   cardsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 16,
+    gap: 12,
   },
   cardContainer: {
     width: cardWidth,
@@ -371,29 +392,32 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     height: 120,
-    borderRadius: 16,
+    borderRadius: 12,
     justifyContent: 'flex-end',
-    padding: 16,
+    padding: 12,
     position: 'relative',
+  },
+  cardLocked: {
+    opacity: 0.5,
   },
   lockBadge: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    top: 8,
+    right: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   cardTitle: {
+    fontSize: 15,
+    fontWeight: '600',
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    letterSpacing: -0.3,
   },
   comingSoonContainer: {
     flex: 1,

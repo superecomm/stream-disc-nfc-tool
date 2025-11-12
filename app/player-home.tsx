@@ -328,12 +328,20 @@ export default function PlayerHomeScreen() {
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navButton} activeOpacity={0.6}>
+        <TouchableOpacity 
+          style={styles.navButton} 
+          onPress={() => router.push('/player-home')}
+          activeOpacity={0.6}
+        >
           <Ionicons name="home" size={24} color="#FF3B5C" />
           <Text style={[styles.navLabel, styles.navLabelActive]}>Home</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navButton} activeOpacity={0.6}>
+        <TouchableOpacity 
+          style={styles.navButton}
+          onPress={() => router.push('/library')}
+          activeOpacity={0.6}
+        >
           <Ionicons name="library-outline" size={24} color="#999999" />
           <Text style={styles.navLabel}>Library</Text>
         </TouchableOpacity>
@@ -357,14 +365,18 @@ export default function PlayerHomeScreen() {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navButton} activeOpacity={0.6}>
+        <TouchableOpacity 
+          style={styles.navButton}
+          onPress={() => router.push('/inbox')}
+          activeOpacity={0.6}
+        >
           <Ionicons name="mail-outline" size={24} color="#999999" />
           <Text style={styles.navLabel}>Inbox</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.navButton}
-          onPress={() => router.push('/dashboard')}
+          onPress={() => router.push('/profile')}
           activeOpacity={0.6}
         >
           <Ionicons name="person-outline" size={24} color="#999999" />

@@ -819,6 +819,47 @@ class NfcService {
   }
 
   /**
+   * Write a URL directly to NFC tag (DEMO MODE - no verification)
+   */
+  async writeUrl(url: string): Promise<void> {
+    console.log('🔥 Direct URL write (DEMO MODE):', url);
+
+    // Request NFC technology for writing
+    await NfcManager.requestTechnology(NfcTech.Ndef, {
+      alertMessage: 'Hold your Stream Disc near the back of your phone',
+    });
+
+    try {
+      // Wait for tag
+      const tag = await NfcManager.getTag();
+      console.log('📱 Tag detected:', tag);
+
+      if (!tag) {
+        throw new Error('No NFC tag detected');
+      }
+
+      // Encode URL
+      const urlBytes = Ndef.encodeMessage([Ndef.uriRecord(url)]);
+      console.log('📝 Writing URL:', url);
+
+      // Write directly to tag
+      await NfcManager.writeNdefMessage(urlBytes);
+      console.log('✅ Successfully wrote URL to NFC tag');
+
+      // Cancel technology request
+      await NfcManager.cancelTechnologyRequest();
+    } catch (error) {
+      // Cancel on error
+      try {
+        await NfcManager.cancelTechnologyRequest();
+      } catch (e) {
+        // Ignore
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Cleanup
    */
   async cleanup(): Promise<void> {

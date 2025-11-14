@@ -5,11 +5,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   Modal,
+  SafeAreaView,
   ScrollView,
   Dimensions,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -391,7 +391,7 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -504,23 +504,21 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
       </SafeAreaView>
 
       {/* NFC Scanning Modal */}
-      {showNfcScanning && (
-        <NfcScanModal
-          visible={showNfcScanning}
-          onClose={() => {
-            setShowNfcScanning(false);
-            setIsBlankDisc(false);
-            nfcService.cleanup();
-          }}
-          mode="read"
-          statusMessage={nfcStatus}
-          isScanning={isScanning}
-          showActionButton={isBlankDisc}
-          actionButtonText="Program Disc"
-          onActionButtonPress={handleProgramDisc}
-          showBlankDiscImage={isBlankDisc}
-        />
-      )}
+      <NfcScanModal
+        visible={showNfcScanning}
+        onClose={() => {
+          setShowNfcScanning(false);
+          setIsBlankDisc(false);
+          nfcService.cleanup();
+        }}
+        mode="read"
+        statusMessage={nfcStatus}
+        isScanning={isScanning}
+        showActionButton={isBlankDisc}
+        actionButtonText="Program Disc"
+        onActionButtonPress={handleProgramDisc}
+        showBlankDiscImage={isBlankDisc}
+      />
     </Modal>
   );
 }

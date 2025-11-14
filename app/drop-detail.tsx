@@ -131,41 +131,11 @@ export default function DropDetailScreen() {
       return;
     }
 
-    setPurchasing(true);
-
-    try {
-      // Create pre-order
-      const preOrderId = await paymentService.createPreOrder({
-        userId: user.uid,
-        dropId: drop.id,
-        albumId: drop.albumId,
-        artistId: drop.artistId,
-        amount: drop.price,
-      });
-
-      Alert.alert(
-        'Pre-Order Confirmed! 🎉',
-        `Your Stream Disc will be produced and shipped in the next scheduled manufacturing batch. You'll receive updates on production status.`,
-        [
-          {
-            text: 'View Order',
-            onPress: () => router.push('/orders'),
-          },
-          {
-            text: 'Done',
-            style: 'cancel',
-          },
-        ]
-      );
-
-      // Refresh drop data to update sold count
-      loadDropDetails();
-    } catch (error) {
-      console.error('Error creating pre-order:', error);
-      Alert.alert('Error', 'Failed to process pre-order. Please try again.');
-    } finally {
-      setPurchasing(false);
-    }
+    // Navigate to checkout
+    router.push({
+      pathname: '/checkout',
+      params: { dropId: drop.id },
+    });
   };
 
   const handleArtistPress = () => {

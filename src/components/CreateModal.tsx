@@ -5,11 +5,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   Modal,
-  SafeAreaView,
   ScrollView,
   Dimensions,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -276,10 +276,12 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
   };
 
   const handleProgramDisc = () => {
-    // Just close the NFC modal to return to Studio grid
+    // Close the NFC modal but keep the Studio grid visible
     setShowNfcScanning(false);
     setIsBlankDisc(false);
-    // User can now select Album (or other content type) from the Studio grid
+    setNfcStatus('');
+    // User stays in Studio mode and can now select Album (or other content type)
+    console.log('NFC modal closed - Studio grid ready for content selection');
   };
 
   const handleCardPress = (route: string, type: string, locked: boolean) => {
@@ -382,7 +384,7 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -559,7 +561,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 200,
+    paddingBottom: 280,
   },
   cardsGrid: {
     flexDirection: 'row',

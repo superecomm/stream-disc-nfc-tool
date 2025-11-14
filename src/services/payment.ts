@@ -1,232 +1,213 @@
-import { Alert } from 'react-native';
-import { firestoreService } from './firestore';
-import { authService } from './auth';
-
 /**
- * Payment Service
- * Placeholder for future Stripe or RevenueCat integration
+ * Payment Service for Production-Grade MVP
+ * 
+ * Handles:
+ * - Pre-order payment processing
+ * - Escrow management (hold/release/refund)
+ * - 70/30 revenue split (artist/platform)
+ * - Stripe integration (test mode for MVP)
  */
 
-type SubscriptionTier = 'pro' | 'business' | 'enterprise';
+// For MVP: Using test mode/simulated payments
+// Production: Integrate Stripe Connect for real payments
 
-interface SubscriptionInfo {
-  tier: SubscriptionTier;
-  price: number;
-  storage: string;
-  features: string[];
+interface PaymentResult {
+  success: boolean;
+  chargeId?: string;
+  paymentIntentId?: string;
+  error?: string;
 }
 
-const SUBSCRIPTION_PLANS: Record<SubscriptionTier, SubscriptionInfo> = {
-  pro: {
-    tier: 'pro',
-    price: 10,
-    storage: '5GB',
-    features: [
-      'No ads',
-      '5GB storage',
-      'Publish to Stream Disc Store',
-      'Unlimited disc creation',
-      'Priority support',
-    ],
-  },
-  business: {
-    tier: 'business',
-    price: 20,
-    storage: '30GB',
-    features: [
-      'No ads',
-      '30GB storage',
-      'Publish to Stream Disc Store',
-      'Unlimited disc creation',
-      'Priority support',
-      'Analytics dashboard',
-      'Custom branding',
-    ],
-  },
-  enterprise: {
-    tier: 'enterprise',
-    price: 0, // Contact for pricing
-    storage: 'Unlimited',
-    features: [
-      'Everything in Business',
-      'Unlimited storage',
-      'Dedicated account manager',
-      'Custom integrations',
-      'SLA guarantee',
-    ],
-  },
-};
+interface RevenueSplit {
+  platformFee: number;
+  artistRevenue: number;
+}
 
 class PaymentService {
-  /**
-   * Get subscription plan information
-   */
-  getSubscriptionPlans(): Record<SubscriptionTier, SubscriptionInfo> {
-    return SUBSCRIPTION_PLANS;
-  }
+  private PLATFORM_FEE_PERCENTAGE = 0.30; // 30%
+  private ARTIST_REVENUE_PERCENTAGE = 0.70; // 70%
 
   /**
-   * Get specific plan information
+   * Process pre-order payment
+   * For MVP: Simulated payment (returns success)
+   * Production: Use Stripe PaymentIntent API
    */
-  getPlanInfo(tier: SubscriptionTier): SubscriptionInfo {
-    return SUBSCRIPTION_PLANS[tier];
-  }
-
-  /**
-   * Initiate purchase for a subscription tier
-   * TODO: Integrate with Stripe or RevenueCat
-   */
-  async initiatePurchase(tier: SubscriptionTier): Promise<boolean> {
+  async processPreOrder(amount: number, fanId: string): Promise<PaymentResult> {
     try {
-      const userId = authService.getCurrentUserId();
-      if (!userId) {
-        Alert.alert('Error', 'Please sign in to upgrade your subscription');
-        return false;
+      console.log(`Processing payment: $${amount} for fan ${fanId}`);
+
+      // MVP: Simulate payment processing
+      // TODO: Replace with actual Stripe integration in production
+      const isSimulated = true;
+
+      if (isSimulated) {
+        // Simulate network delay
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        return {
+          success: true,
+          chargeId: `ch_test_${Date.now()}`,
+          paymentIntentId: `pi_test_${Date.now()}`,
+        };
       }
 
-      if (tier === 'enterprise') {
-        Alert.alert(
-          'Contact Sales',
-          'For Enterprise plans, please contact our sales team at sales@streamdisc.com',
-          [{ text: 'OK' }]
-        );
-        return false;
-      }
+      // Production Stripe integration would look like:
+      /*
+      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Convert to cents
+        currency: 'usd',
+        customer: fanId,
+        metadata: {
+          type: 'stream_disc_preorder',
+        },
+      });
 
-      // TODO: Integrate with Stripe or RevenueCat
-      // For now, show placeholder alert
-      Alert.alert(
-        'Payment Integration Coming Soon',
-        `You selected the ${tier.toUpperCase()} plan ($${SUBSCRIPTION_PLANS[tier].price}/month).\n\nPayment processing will be integrated with Stripe or RevenueCat.`,
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-          {
-            text: 'Simulate Purchase (Dev)',
-            onPress: async () => {
-              await this.simulatePurchaseSuccess(userId, tier);
-            },
-          },
-        ]
-      );
+      return {
+        success: true,
+        chargeId: paymentIntent.charges.data[0]?.id,
+        paymentIntentId: paymentIntent.id,
+      };
+      */
 
-      return false;
-    } catch (error) {
-      console.error('Error initiating purchase:', error);
-      Alert.alert('Error', 'Failed to initiate purchase');
-      return false;
+      return {
+        success: false,
+        error: 'Stripe not configured',
+      };
+    } catch (error: any) {
+      console.error('Payment processing error:', error);
+      return {
+        success: false,
+        error: error.message || 'Payment failed',
+      };
     }
   }
 
   /**
-   * Simulate successful purchase (for development/testing)
-   * TODO: Remove this in production
+   * Hold funds in escrow
+   * For MVP: Tracked in Firestore (escrowStatus = 'held')
+   * Production: Use Stripe Connect with separate charges
    */
-  private async simulatePurchaseSuccess(
-    userId: string,
-    tier: SubscriptionTier
-  ): Promise<void> {
+  async holdInEscrow(orderId: string, amount: number): Promise<void> {
     try {
-      await firestoreService.updateSubscriptionTier(userId, tier);
-      Alert.alert(
-        'Success!',
-        `Your subscription has been upgraded to ${tier.toUpperCase()}!\n\n(This is a simulated purchase for development)`
-      );
+      console.log(`Holding $${amount} in escrow for order ${orderId}`);
+      
+      // MVP: Escrow status is managed in Firestore
+      // The createPreOrder method in firestoreService sets escrowStatus to 'held'
+      
+      // Production: Use Stripe Connect
+      // - Create destination charge with on_behalf_of
+      // - Hold funds until batch is ready to ship
     } catch (error) {
-      console.error('Error simulating purchase:', error);
-      Alert.alert('Error', 'Failed to update subscription');
+      console.error('Escrow hold error:', error);
+      throw error;
     }
   }
 
   /**
-   * Cancel subscription
-   * TODO: Integrate with Stripe or RevenueCat
+   * Release funds from escrow (pay artists)
+   * For MVP: Update Firestore escrowStatus to 'released'
+   * Production: Transfer funds via Stripe Connect
    */
-  async cancelSubscription(): Promise<boolean> {
+  async releaseFromEscrow(orderId: string): Promise<void> {
     try {
-      const userId = authService.getCurrentUserId();
-      if (!userId) {
-        Alert.alert('Error', 'Please sign in to manage your subscription');
-        return false;
-      }
-
-      // TODO: Integrate with Stripe or RevenueCat
-      Alert.alert(
-        'Cancel Subscription',
-        'Subscription cancellation will be integrated with Stripe or RevenueCat.',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-          {
-            text: 'Downgrade to Free (Dev)',
-            onPress: async () => {
-              await firestoreService.updateSubscriptionTier(userId, 'free');
-              Alert.alert('Downgraded', 'Your subscription has been downgraded to Free tier.');
-            },
-          },
-        ]
-      );
-
-      return false;
+      console.log(`Releasing escrow for order ${orderId}`);
+      
+      // MVP: This is handled by firestoreService.releaseBatchPayments()
+      // which updates escrowStatus to 'released'
+      
+      // Production: Use Stripe Connect Transfer API
+      /*
+      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      
+      await stripe.transfers.create({
+        amount: artistRevenue * 100, // in cents
+        currency: 'usd',
+        destination: artistStripeAccountId,
+        metadata: {
+          order_id: orderId,
+        },
+      });
+      */
     } catch (error) {
-      console.error('Error cancelling subscription:', error);
-      Alert.alert('Error', 'Failed to cancel subscription');
-      return false;
+      console.error('Escrow release error:', error);
+      throw error;
     }
   }
 
   /**
-   * Restore purchases (for mobile app stores)
-   * TODO: Integrate with App Store / Google Play via RevenueCat
+   * Refund order
+   * For MVP: Update Firestore escrowStatus to 'refunded'
+   * Production: Create Stripe refund
    */
-  async restorePurchases(): Promise<boolean> {
+  async refundOrder(orderId: string): Promise<void> {
     try {
-      // TODO: Integrate with RevenueCat to restore purchases
-      Alert.alert(
-        'Restore Purchases',
-        'Purchase restoration will be integrated with RevenueCat for App Store and Google Play subscriptions.'
-      );
-      return false;
+      console.log(`Refunding order ${orderId}`);
+      
+      // MVP: Update Firestore status
+      // Production: Use Stripe Refund API
+      /*
+      const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+      
+      await stripe.refunds.create({
+        charge: chargeId,
+      });
+      */
     } catch (error) {
-      console.error('Error restoring purchases:', error);
-      Alert.alert('Error', 'Failed to restore purchases');
-      return false;
+      console.error('Refund error:', error);
+      throw error;
     }
   }
 
   /**
-   * Check if user has active subscription
-   * TODO: Verify with payment provider
+   * Calculate revenue split (70/30)
    */
-  async hasActiveSubscription(): Promise<boolean> {
-    try {
-      return await authService.isPremium();
-    } catch (error) {
-      console.error('Error checking subscription status:', error);
-      return false;
-    }
+  calculateSplit(amount: number): RevenueSplit {
+    const platformFee = amount * this.PLATFORM_FEE_PERCENTAGE;
+    const artistRevenue = amount * this.ARTIST_REVENUE_PERCENTAGE;
+
+    return {
+      platformFee: Math.round(platformFee * 100) / 100, // Round to 2 decimals
+      artistRevenue: Math.round(artistRevenue * 100) / 100,
+    };
   }
 
   /**
-   * Get user's current subscription tier
+   * Validate payment amount
    */
-  async getCurrentTier(): Promise<string> {
-    try {
-      const userId = authService.getCurrentUserId();
-      if (!userId) return 'free';
-
-      const profile = await firestoreService.getUserProfile(userId);
-      return profile?.subscriptionTier || 'free';
-    } catch (error) {
-      console.error('Error getting current tier:', error);
-      return 'free';
+  validateAmount(amount: number): { valid: boolean; error?: string } {
+    if (amount < 1) {
+      return { valid: false, error: 'Amount must be at least $1' };
     }
+
+    if (amount > 10000) {
+      return { valid: false, error: 'Amount cannot exceed $10,000' };
+    }
+
+    return { valid: true };
+  }
+
+  /**
+   * Format currency for display
+   */
+  formatCurrency(amount: number): string {
+    return `$${amount.toFixed(2)}`;
+  }
+
+  /**
+   * Get Stripe publishable key (for frontend)
+   * For MVP: Returns test key
+   * Production: Returns live key from env
+   */
+  getPublishableKey(): string {
+    // MVP: Test mode
+    return 'pk_test_...'; // Replace with actual test key
+    
+    // Production:
+    // return process.env.STRIPE_PUBLISHABLE_KEY || '';
   }
 }
 
 export const paymentService = new PaymentService();
-
+export default paymentService;

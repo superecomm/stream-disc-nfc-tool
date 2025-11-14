@@ -22,6 +22,12 @@ const TEMPLATES_COLLECTION = 'templates';
 const REGISTERED_DISCS_COLLECTION = 'registeredDiscs'; // Manufacturing registry
 const DISC_SCANS_COLLECTION = 'discScans'; // Scan logs
 
+// ============ MARKETPLACE COLLECTIONS ============
+const DROPS_COLLECTION = 'drops'; // Marketplace drops
+const PRE_ORDERS_COLLECTION = 'preOrders'; // Fan pre-orders
+const BATCHES_COLLECTION = 'batches'; // Manufacturing batches
+const ANALYTICS_EVENTS_COLLECTION = 'analyticsEvents'; // Event tracking
+
 class FirestoreService {
   // ============ USER MANAGEMENT ============
   
@@ -744,6 +750,724 @@ class FirestoreService {
     } catch (error) {
       console.error('Error deleting album:', error);
       throw error;
+    }
+  }
+
+  // ============ MARKETPLACE: DROPS ============
+
+  /**
+   * Create a new drop
+   */
+  async createDrop(dropData: {
+    artistId: string;
+    artistName: string;
+    albumId: string;
+    title: string;
+    coverImage: string;
+    price: number;
+    isExclusive: boolean;
+    singlesAvailable: string[];
+    totalEditions: number | null;
+    genre?: string;
+    description?: string;
+    releaseDate?: Date | null;
+  }): Promise<string> {
+    try {
+      const dropRef = await addDoc(collection(db, DROPS_COLLECTION), {
+        ...dropData,
+        soldCount: 0,
+        status: 'active',
+        batchId: null,
+        createdAt: serverTimestamp(),
+      });
+
+      console.log('Drop created with ID:', dropRef.id);
+      return dropRef.id;
+    } catch (error) {
+      console.error('Error creating drop:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get drop by ID
+   */
+  async getDropById(dropId: string) {
+    try {
+      const dropRef = doc(db, DROPS_COLLECTION, dropId);
+      const dropSnap = await getDoc(dropRef);
+
+      if (dropSnap.exists()) {
+        const data = dropSnap.data();
+        return {
+          id: dropSnap.id,
+          ...data,
+          createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+          releaseDate: data.releaseDate ? (data.releaseDate as Timestamp).toDate() : null,
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting drop:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all active drops for marketplace
+   */
+  async getActiveDrops() {
+    try {
+      const dropsQuery = query(
+        collection(db, DROPS_COLLECTION),
+        where('status', '==', 'active')
+      );
+      const querySnapshot = await getDocs(dropsQuery);
+
+      const drops: any[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        drops.push({
+          id: doc.id,
+          ...data,
+          createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+        });
+      });
+
+      return drops;
+    } catch (error) {
+      console.error('Error getting active drops:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get artist's drops
+   */
+  async getArtistDrops(artistId: string) {
+    try {
+      const dropsQuery = query(
+        collection(db, DROPS_COLLECTION),
+        where('artistId', '==', artistId)
+      );
+      const querySnapshot = await getDocs(dropsQuery);
+
+      const drops: any[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        drops.push({
+          id: doc.id,
+          ...data,
+          createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+        });
+      });
+
+      return drops;
+    } catch (error) {
+      console.error('Error getting artist drops:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get drop by album ID
+   */
+  async getDropByAlbumId(albumId: string) {
+    try {
+      const dropsQuery = query(
+        collection(db, DROPS_COLLECTION),
+        where('albumId', '==', albumId)
+      );
+      const querySnapshot = await getDocs(dropsQuery);
+
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting drop by album ID:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update drop
+   */
+  async updateDrop(dropId: string, updates: Partial<any>): Promise<void> {
+    try {
+      const dropRef = doc(db, DROPS_COLLECTION, dropId);
+      await updateDoc(dropRef, {
+        ...updates,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Error updating drop:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Increment drop sold count
+   */
+  async incrementDropSoldCount(dropId: string): Promise<void> {
+    try {
+      const dropRef = doc(db, DROPS_COLLECTION, dropId);
+      const dropSnap = await getDoc(dropRef);
+
+      if (dropSnap.exists()) {
+        const currentCount = dropSnap.data().soldCount || 0;
+        await updateDoc(dropRef, {
+          soldCount: currentCount + 1,
+          updatedAt: serverTimestamp(),
+        });
+      }
+    } catch (error) {
+      console.error('Error incrementing sold count:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update drops status (for batch processing)
+   */
+  async updateDropsStatus(dropIds: string[], status: string): Promise<void> {
+    try {
+      const updatePromises = dropIds.map((dropId) => {
+        const dropRef = doc(db, DROPS_COLLECTION, dropId);
+        return updateDoc(dropRef, {
+          status,
+          updatedAt: serverTimestamp(),
+        });
+      });
+
+      await Promise.all(updatePromises);
+    } catch (error) {
+      console.error('Error updating drops status:', error);
+      throw error;
+    }
+  }
+
+  // ============ MARKETPLACE: PRE-ORDERS ============
+
+  /**
+   * Create a pre-order
+   */
+  async createPreOrder(orderData: {
+    dropId: string;
+    fanId: string;
+    fanEmail: string;
+    fanName: string;
+    artistId: string;
+    artistName: string;
+    albumTitle: string;
+    albumCoverUrl: string;
+    amount: number;
+    platformFee: number;
+    artistRevenue: number;
+    shippingAddress: {
+      name: string;
+      street: string;
+      city: string;
+      state: string;
+      zip: string;
+      country: string;
+    };
+    paymentIntentId?: string;
+    chargeId?: string;
+  }): Promise<string> {
+    try {
+      const orderRef = await addDoc(collection(db, PRE_ORDERS_COLLECTION), {
+        ...orderData,
+        status: 'pending',
+        escrowStatus: 'held',
+        batchId: null,
+        discUID: null,
+        trackingNumber: null,
+        shippingCarrier: null,
+        shippedAt: null,
+        completedAt: null,
+        orderedAt: serverTimestamp(),
+      });
+
+      console.log('Pre-order created with ID:', orderRef.id);
+      return orderRef.id;
+    } catch (error) {
+      console.error('Error creating pre-order:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get user's pre-orders
+   */
+  async getUserPreOrders(userId: string) {
+    try {
+      const ordersQuery = query(
+        collection(db, PRE_ORDERS_COLLECTION),
+        where('fanId', '==', userId)
+      );
+      const querySnapshot = await getDocs(ordersQuery);
+
+      const orders: any[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        orders.push({
+          id: doc.id,
+          ...data,
+          orderedAt: (data.orderedAt as Timestamp)?.toDate() || new Date(),
+          shippedAt: data.shippedAt ? (data.shippedAt as Timestamp).toDate() : null,
+          completedAt: data.completedAt ? (data.completedAt as Timestamp).toDate() : null,
+        });
+      });
+
+      return orders;
+    } catch (error) {
+      console.error('Error getting user pre-orders:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get user's order for a specific drop
+   */
+  async getUserOrderForDrop(userId: string, dropId: string) {
+    try {
+      const ordersQuery = query(
+        collection(db, PRE_ORDERS_COLLECTION),
+        where('fanId', '==', userId),
+        where('dropId', '==', dropId)
+      );
+      const querySnapshot = await getDocs(ordersQuery);
+
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          orderedAt: (data.orderedAt as Timestamp)?.toDate() || new Date(),
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting user order for drop:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get order by disc UID
+   */
+  async getOrderByDiscUID(discUID: string) {
+    try {
+      const ordersQuery = query(
+        collection(db, PRE_ORDERS_COLLECTION),
+        where('discUID', '==', discUID)
+      );
+      const querySnapshot = await getDocs(ordersQuery);
+
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          orderedAt: (data.orderedAt as Timestamp)?.toDate() || new Date(),
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting order by disc UID:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get artist's pre-orders
+   */
+  async getArtistPreOrders(artistId: string) {
+    try {
+      const ordersQuery = query(
+        collection(db, PRE_ORDERS_COLLECTION),
+        where('artistId', '==', artistId)
+      );
+      const querySnapshot = await getDocs(ordersQuery);
+
+      const orders: any[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        orders.push({
+          id: doc.id,
+          ...data,
+          orderedAt: (data.orderedAt as Timestamp)?.toDate() || new Date(),
+        });
+      });
+
+      return orders;
+    } catch (error) {
+      console.error('Error getting artist pre-orders:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update order status
+   */
+  async updateOrderStatus(orderId: string, status: string): Promise<void> {
+    try {
+      const orderRef = doc(db, PRE_ORDERS_COLLECTION, orderId);
+      const updates: any = {
+        status,
+        updatedAt: serverTimestamp(),
+      };
+
+      if (status === 'completed') {
+        updates.completedAt = serverTimestamp();
+      }
+
+      await updateDoc(orderRef, updates);
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Assign orders to batch
+   */
+  async assignOrdersToBatch(dropIds: string[], batchId: string): Promise<void> {
+    try {
+      const ordersQuery = query(
+        collection(db, PRE_ORDERS_COLLECTION),
+        where('dropId', 'in', dropIds),
+        where('status', '==', 'pending')
+      );
+      const querySnapshot = await getDocs(ordersQuery);
+
+      const updatePromises: Promise<void>[] = [];
+      querySnapshot.forEach((doc) => {
+        const orderRef = doc.ref;
+        updatePromises.push(
+          updateDoc(orderRef, {
+            batchId,
+            status: 'in-production',
+            updatedAt: serverTimestamp(),
+          })
+        );
+      });
+
+      await Promise.all(updatePromises);
+    } catch (error) {
+      console.error('Error assigning orders to batch:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Calculate artist's pending revenue (escrow)
+   */
+  async getArtistPendingRevenue(artistId: string): Promise<number> {
+    try {
+      const ordersQuery = query(
+        collection(db, PRE_ORDERS_COLLECTION),
+        where('artistId', '==', artistId),
+        where('escrowStatus', '==', 'held')
+      );
+      const querySnapshot = await getDocs(ordersQuery);
+
+      let totalRevenue = 0;
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        totalRevenue += data.artistRevenue || 0;
+      });
+
+      return totalRevenue;
+    } catch (error) {
+      console.error('Error calculating pending revenue:', error);
+      throw error;
+    }
+  }
+
+  // ============ MARKETPLACE: BATCHES ============
+
+  /**
+   * Create manufacturing batch
+   */
+  async createBatch(batchData: {
+    batchNumber: string;
+    dropIds: string[];
+    totalOrders: number;
+    totalRevenue: number;
+    platformRevenue: number;
+    artistRevenue: number;
+    productionStartDate: Date | null;
+    estimatedShipDate: Date | null;
+    createdBy: string;
+    notes?: string;
+  }): Promise<string> {
+    try {
+      const batchRef = await addDoc(collection(db, BATCHES_COLLECTION), {
+        ...batchData,
+        status: 'pending',
+        actualShipDate: null,
+        createdAt: serverTimestamp(),
+      });
+
+      console.log('Batch created with ID:', batchRef.id);
+      return batchRef.id;
+    } catch (error) {
+      console.error('Error creating batch:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all batches
+   */
+  async getAllBatches() {
+    try {
+      const batchesQuery = query(collection(db, BATCHES_COLLECTION));
+      const querySnapshot = await getDocs(batchesQuery);
+
+      const batches: any[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        batches.push({
+          id: doc.id,
+          ...data,
+          createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+          productionStartDate: data.productionStartDate ? (data.productionStartDate as Timestamp).toDate() : null,
+          estimatedShipDate: data.estimatedShipDate ? (data.estimatedShipDate as Timestamp).toDate() : null,
+          actualShipDate: data.actualShipDate ? (data.actualShipDate as Timestamp).toDate() : null,
+        });
+      });
+
+      return batches;
+    } catch (error) {
+      console.error('Error getting batches:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update batch status
+   */
+  async updateBatchStatus(batchId: string, status: string): Promise<void> {
+    try {
+      const batchRef = doc(db, BATCHES_COLLECTION, batchId);
+      await updateDoc(batchRef, {
+        status,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Error updating batch status:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Release batch payments to artists
+   */
+  async releaseBatchPayments(batchId: string): Promise<void> {
+    try {
+      // Update all orders in this batch to 'released' escrow status
+      const ordersQuery = query(
+        collection(db, PRE_ORDERS_COLLECTION),
+        where('batchId', '==', batchId),
+        where('escrowStatus', '==', 'held')
+      );
+      const querySnapshot = await getDocs(ordersQuery);
+
+      const updatePromises: Promise<void>[] = [];
+      querySnapshot.forEach((doc) => {
+        const orderRef = doc.ref;
+        updatePromises.push(
+          updateDoc(orderRef, {
+            escrowStatus: 'released',
+            updatedAt: serverTimestamp(),
+          })
+        );
+      });
+
+      await Promise.all(updatePromises);
+
+      // Update batch status
+      await this.updateBatchStatus(batchId, 'completed');
+
+      console.log(`Released payments for batch ${batchId}`);
+    } catch (error) {
+      console.error('Error releasing batch payments:', error);
+      throw error;
+    }
+  }
+
+  // ============ MARKETPLACE: ANALYTICS ============
+
+  /**
+   * Track analytics event
+   */
+  async trackEvent(eventData: {
+    type: string;
+    userId: string;
+    userEmail?: string;
+    dropId?: string;
+    albumId?: string;
+    trackId?: string;
+    batchId?: string;
+    amount?: number;
+    metadata?: Record<string, any>;
+  }): Promise<void> {
+    try {
+      await addDoc(collection(db, ANALYTICS_EVENTS_COLLECTION), {
+        ...eventData,
+        timestamp: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Error tracking event:', error);
+      // Don't throw - analytics failures shouldn't break user flow
+    }
+  }
+
+  /**
+   * Get total revenue
+   */
+  async getTotalRevenue(): Promise<number> {
+    try {
+      const ordersQuery = query(collection(db, PRE_ORDERS_COLLECTION));
+      const querySnapshot = await getDocs(ordersQuery);
+
+      let total = 0;
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        total += data.amount || 0;
+      });
+
+      return total;
+    } catch (error) {
+      console.error('Error getting total revenue:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Get revenue by period (last N days)
+   */
+  async getRevenueByPeriod(days: number): Promise<number> {
+    try {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+
+      const ordersQuery = query(
+        collection(db, PRE_ORDERS_COLLECTION),
+        where('orderedAt', '>=', startDate)
+      );
+      const querySnapshot = await getDocs(ordersQuery);
+
+      let total = 0;
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        total += data.amount || 0;
+      });
+
+      return total;
+    } catch (error) {
+      console.error('Error getting revenue by period:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Get active drops count
+   */
+  async getActiveDropsCount(): Promise<number> {
+    try {
+      const dropsQuery = query(
+        collection(db, DROPS_COLLECTION),
+        where('status', '==', 'active')
+      );
+      const querySnapshot = await getDocs(dropsQuery);
+      return querySnapshot.size;
+    } catch (error) {
+      console.error('Error getting active drops count:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Get total artists count
+   */
+  async getTotalArtistsCount(): Promise<number> {
+    try {
+      // Get unique artist IDs from drops
+      const dropsQuery = query(collection(db, DROPS_COLLECTION));
+      const querySnapshot = await getDocs(dropsQuery);
+
+      const artistIds = new Set<string>();
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.artistId) {
+          artistIds.add(data.artistId);
+        }
+      });
+
+      return artistIds.size;
+    } catch (error) {
+      console.error('Error getting total artists count:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Get total fans count
+   */
+  async getTotalFansCount(): Promise<number> {
+    try {
+      // Get unique fan IDs from pre-orders
+      const ordersQuery = query(collection(db, PRE_ORDERS_COLLECTION));
+      const querySnapshot = await getDocs(ordersQuery);
+
+      const fanIds = new Set<string>();
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.fanId) {
+          fanIds.add(data.fanId);
+        }
+      });
+
+      return fanIds.size;
+    } catch (error) {
+      console.error('Error getting total fans count:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Get escrow balance (total held funds)
+   */
+  async getEscrowBalance(): Promise<number> {
+    try {
+      const ordersQuery = query(
+        collection(db, PRE_ORDERS_COLLECTION),
+        where('escrowStatus', '==', 'held')
+      );
+      const querySnapshot = await getDocs(ordersQuery);
+
+      let total = 0;
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        total += data.amount || 0;
+      });
+
+      return total;
+    } catch (error) {
+      console.error('Error getting escrow balance:', error);
+      return 0;
     }
   }
 }

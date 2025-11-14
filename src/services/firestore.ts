@@ -816,27 +816,88 @@ class FirestoreService {
   /**
    * Get all active drops for marketplace
    */
-  async getActiveDrops() {
+  async getActiveDrops(filters?: {
+    genre?: string;
+    limit?: number;
+    sortBy?: 'createdAt' | 'soldCount' | 'price';
+    sortOrder?: 'asc' | 'desc';
+  }) {
     try {
-      const dropsQuery = query(
+      let q = query(
         collection(db, DROPS_COLLECTION),
         where('status', '==', 'active')
       );
-      const querySnapshot = await getDocs(dropsQuery);
 
-      const drops: any[] = [];
-      querySnapshot.forEach((doc) => {
+      // Apply genre filter if provided
+      if (filters?.genre && filters.genre !== 'All') {
+        q = query(q, where('genre', '==', filters.genre));
+      }
+
+      const querySnapshot = await getDocs(q);
+      const drops = querySnapshot.docs.map((doc) => {
         const data = doc.data();
-        drops.push({
+        return {
           id: doc.id,
           ...data,
           createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
-        });
+          releaseDate: data.releaseDate ? (data.releaseDate as Timestamp).toDate() : null,
+        };
       });
+
+      // Apply sorting (client-side for now, can optimize with Firestore indexes)
+      if (filters?.sortBy) {
+        drops.sort((a, b) => {
+          const aVal = a[filters.sortBy!] || 0;
+          const bVal = b[filters.sortBy!] || 0;
+          
+          if (filters.sortOrder === 'asc') {
+            return aVal > bVal ? 1 : -1;
+          } else {
+            return aVal < bVal ? 1 : -1;
+          }
+        });
+      }
+
+      // Apply limit
+      if (filters?.limit) {
+        return drops.slice(0, filters.limit);
+      }
 
       return drops;
     } catch (error) {
       console.error('Error getting active drops:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Search drops by title or artist
+   */
+  async searchDrops(searchQuery: string) {
+    try {
+      const q = query(
+        collection(db, DROPS_COLLECTION),
+        where('status', '==', 'active')
+      );
+
+      const querySnapshot = await getDocs(q);
+      const drops = querySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+        };
+      });
+
+      // Client-side filtering (Firestore doesn't support OR queries easily)
+      const query = searchQuery.toLowerCase();
+      return drops.filter((drop: any) =>
+        drop.title?.toLowerCase().includes(query) ||
+        drop.artistName?.toLowerCase().includes(query)
+      );
+    } catch (error) {
+      console.error('Error searching drops:', error);
       throw error;
     }
   }

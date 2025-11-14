@@ -714,8 +714,8 @@ export default function CreateAlbumScreen() {
             <ActivityIndicator color="#FFFFFF" />
           ) : (
             <>
-              <Ionicons name="flame" size={28} color="#FFFFFF" />
-              <Text style={styles.floatingBurnText}>Burn to Disc</Text>
+              <Ionicons name="rocket" size={28} color="#FFFFFF" />
+              <Text style={styles.floatingBurnText}>Publish Drop</Text>
             </>
           )}
         </TouchableOpacity>
@@ -1098,6 +1098,161 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: -0.3,
+  },
+  // ============ DROP CONFIGURATION STYLES ============
+  dropConfigSection: {
+    backgroundColor: 'rgba(6, 255, 165, 0.05)',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(6, 255, 165, 0.2)',
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  dropConfigTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+  },
+  dropConfigSubtitle: {
+    fontSize: 13,
+    color: '#9A9A9A',
+    marginBottom: 20,
+    lineHeight: 18,
+  },
+  dropConfigItem: {
+    marginBottom: 20,
+  },
+  dropConfigLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#06FFA5',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  dropConfigHelp: {
+    fontSize: 12,
+    color: '#9A9A9A',
+    marginTop: 6,
+    lineHeight: 16,
+  },
+  priceInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 16,
+  },
+  dollarSign: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#06FFA5',
+    marginRight: 4,
+  },
+  priceInput: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+    paddingVertical: 14,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  toggleLabelContainer: {
+    flex: 1,
+  },
+  switch: {
+    width: 50,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 2,
+    justifyContent: 'center',
+  },
+  switchActive: {
+    backgroundColor: '#06FFA5',
+  },
+  switchThumb: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#9A9A9A',
+    transform: [{ translateX: 0 }],
+  },
+  switchThumbActive: {
+    backgroundColor: '#000000',
+    transform: [{ translateX: 20 }],
+  },
+  singlesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+  },
+  singleChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    maxWidth: '48%',
+  },
+  singleChipActive: {
+    backgroundColor: 'rgba(6, 255, 165, 0.1)',
+    borderColor: '#06FFA5',
+  },
+  singleChipText: {
+    fontSize: 13,
+    color: '#9A9A9A',
+    fontWeight: '500',
+    flex: 1,
+  },
+  singleChipTextActive: {
+    color: '#06FFA5',
+  },
+  editionInput: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  manufacturingNote: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: 'rgba(58, 134, 255, 0.1)',
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(58, 134, 255, 0.2)',
+  },
+  manufacturingNoteText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#3A86FF',
+    lineHeight: 16,
+    fontWeight: '500',
   },
 });
 

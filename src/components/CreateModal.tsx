@@ -276,21 +276,28 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
   };
 
   const handleProgramDisc = () => {
+    console.log('[CreateModal] Program Disc button pressed');
+    console.log('[CreateModal] Closing NFC modal, staying in Studio mode');
+    
     // Close the NFC modal but keep the Studio grid visible
     setShowNfcScanning(false);
     setIsBlankDisc(false);
     setNfcStatus('');
+    
     // User stays in Studio mode and can now select Album (or other content type)
-    console.log('NFC modal closed - Studio grid ready for content selection');
+    console.log('[CreateModal] NFC modal closed - Studio grid ready for content selection');
   };
 
   const handleCardPress = (route: string, type: string, locked: boolean) => {
+    console.log(`[CreateModal] Card pressed: ${type}, locked: ${locked}`);
+    
     if (locked) {
-      console.log(`${type} is locked - Premium feature`);
+      console.log(`[CreateModal] ${type} is locked - Premium feature`);
       return;
     }
 
     // Close modal and navigate
+    console.log(`[CreateModal] Navigating to: ${route}`);
     onClose();
     router.push(route as any);
   };
@@ -497,21 +504,23 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
       </SafeAreaView>
 
       {/* NFC Scanning Modal */}
-      <NfcScanModal
-        visible={showNfcScanning}
-        onClose={() => {
-          setShowNfcScanning(false);
-          setIsBlankDisc(false);
-          nfcService.cleanup();
-        }}
-        mode="read"
-        statusMessage={nfcStatus}
-        isScanning={isScanning}
-        showActionButton={isBlankDisc}
-        actionButtonText="Program Disc"
-        onActionButtonPress={handleProgramDisc}
-        showBlankDiscImage={isBlankDisc}
-      />
+      {showNfcScanning && (
+        <NfcScanModal
+          visible={showNfcScanning}
+          onClose={() => {
+            setShowNfcScanning(false);
+            setIsBlankDisc(false);
+            nfcService.cleanup();
+          }}
+          mode="read"
+          statusMessage={nfcStatus}
+          isScanning={isScanning}
+          showActionButton={isBlankDisc}
+          actionButtonText="Program Disc"
+          onActionButtonPress={handleProgramDisc}
+          showBlankDiscImage={isBlankDisc}
+        />
+      )}
     </Modal>
   );
 }

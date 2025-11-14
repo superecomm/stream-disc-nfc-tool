@@ -41,6 +41,13 @@ export default function CreateAlbumScreen() {
   const [storePrice, setStorePrice] = useState('');
   const [showPublishModal, setShowPublishModal] = useState(false);
 
+  // ============ DROP CONFIGURATION ============
+  const [dropPrice, setDropPrice] = useState('20'); // Default $20
+  const [isExclusive, setIsExclusive] = useState(true); // Default: exclusive to disc
+  const [selectedSingles, setSelectedSingles] = useState<number[]>([]); // Track indices
+  const [totalEditions, setTotalEditions] = useState(''); // Empty = unlimited
+  const [showDropConfig, setShowDropConfig] = useState(false);
+
   React.useEffect(() => {
     async function checkPremiumStatus() {
       const premium = await authService.isPremium();
@@ -145,6 +152,14 @@ export default function CreateAlbumScreen() {
     setAudioFiles(audioFiles.filter((_, i) => i !== index));
   };
 
+  const toggleSingle = (index: number) => {
+    if (selectedSingles.includes(index)) {
+      setSelectedSingles(selectedSingles.filter((i) => i !== index));
+    } else {
+      setSelectedSingles([...selectedSingles, index]);
+    }
+  };
+
   const handleVideoPress = () => {
     if (!isPremium) {
       Alert.alert(
@@ -179,10 +194,18 @@ export default function CreateAlbumScreen() {
       return;
     }
 
+    // Drop validation
+    if (!dropPrice || isNaN(parseFloat(dropPrice)) || parseFloat(dropPrice) < 1) {
+      Alert.alert('Error', 'Please enter a valid price (minimum $1)');
+      return;
+    }
+
     setIsUploading(true);
 
     try {
       const userId = authService.getCurrentUserId() || 'anonymous';
+      const user = authService.getCurrentUser();
+      const userDisplayName = user?.displayName || artistName;
 
       // Upload cover image
       setUploadProgress({ coverImage: 0 });
@@ -216,7 +239,39 @@ export default function CreateAlbumScreen() {
         })
       );
 
-      // Create disc document in Firestore
+      // 1. Create album document in Firestore
+      const albumId = await firestoreService.createAlbum({
+        title: albumTitle,
+        artist: artistName,
+        description: description,
+        coverUrl: coverImageUrl,
+        year: new Date().getFullYear(),
+        genre: 'Unknown', // TODO: Add genre selector
+        price: parseFloat(dropPrice),
+        trackCount: audioFiles.length,
+        userId: userId,
+        createdAt: new Date().toISOString(),
+      });
+
+      // 2. Create DROP document (marketplace listing)
+      const singlesAvailableNames = selectedSingles.map((index) => 
+        audioFiles[index].name.replace(/\.[^/.]+$/, '')
+      );
+
+      const dropId = await firestoreService.createDrop({
+        artistId: userId,
+        artistName: userDisplayName,
+        albumId: albumId,
+        title: albumTitle,
+        coverImage: coverImageUrl,
+        price: parseFloat(dropPrice),
+        isExclusive: isExclusive,
+        singlesAvailable: singlesAvailableNames,
+        totalEditions: totalEditions ? parseInt(totalEditions) : null,
+        description: description,
+      });
+
+      // 3. Create legacy disc document (for backwards compatibility)
       const discId = await firestoreService.createDisc({
         type: 'album',
         title: albumTitle,
@@ -225,9 +280,9 @@ export default function CreateAlbumScreen() {
         coverImage: coverImageUrl,
         tracks: trackUrls,
         createdBy: userId,
-        publishedToStore: publishToStore,
-        storePrice: publishToStore ? parseFloat(storePrice) || 0 : null,
-        physicalDiscAvailable: publishToStore,
+        publishedToStore: true, // Always published to marketplace now
+        storePrice: parseFloat(dropPrice),
+        physicalDiscAvailable: true,
       });
 
       // Update storage usage for the user
@@ -239,13 +294,17 @@ export default function CreateAlbumScreen() {
         await firestoreService.updateStorageUsage(userId, totalSize);
       }
 
-      // Navigate DIRECTLY to write-nfc screen to burn the album
+      // Track analytics event
+      const { analyticsService } = await import('../src/services/analytics');
+      await analyticsService.trackDropCreated(dropId, userId, parseFloat(dropPrice));
+
+      // Navigate to drop preview screen
       router.push({
-        pathname: '/write-nfc',
-        params: { contentId: discId },
+        pathname: '/drop-preview',
+        params: { dropId, albumId },
       });
     } catch (error) {
-      console.error('Error creating album:', error);
+      console.error('Error creating album/drop:', error);
       Alert.alert('Error', 'Failed to create album. Please try again.');
     } finally {
       setIsUploading(false);
@@ -398,8 +457,125 @@ export default function CreateAlbumScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Publish to Store Toggle (Premium Only) */}
-        {isPremium && (
+        {/* ============ DROP CONFIGURATION SECTION ============ */}
+        {audioFiles.length > 0 && (
+          <View style={styles.dropConfigSection}>
+            <View style={styles.sectionHeaderRow}>
+              <Ionicons name="pricetag" size={20} color="#06FFA5" />
+              <Text style={styles.dropConfigTitle}>Stream Disc Drop</Text>
+            </View>
+            <Text style={styles.dropConfigSubtitle}>
+              Configure pricing and availability for your album
+            </Text>
+
+            {/* Price Input */}
+            <View style={styles.dropConfigItem}>
+              <Text style={styles.dropConfigLabel}>PRICE PER DISC</Text>
+              <View style={styles.priceInputContainer}>
+                <Text style={styles.dollarSign}>$</Text>
+                <TextInput
+                  style={styles.priceInput}
+                  placeholder="20"
+                  placeholderTextColor="#666666"
+                  value={dropPrice}
+                  onChangeText={setDropPrice}
+                  keyboardType="decimal-pad"
+                  editable={!isUploading}
+                />
+              </View>
+              <Text style={styles.dropConfigHelp}>Minimum $1 USD</Text>
+            </View>
+
+            {/* Exclusivity Toggle */}
+            <View style={styles.dropConfigItem}>
+              <View style={styles.toggleRow}>
+                <View style={styles.toggleLabelContainer}>
+                  <Text style={styles.dropConfigLabel}>ALBUM EXCLUSIVE TO DISC</Text>
+                  <Text style={styles.dropConfigHelp}>
+                    {isExclusive 
+                      ? 'Full album playback requires physical Stream Disc'
+                      : 'Selected singles available for streaming'}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.switch, isExclusive && styles.switchActive]}
+                  onPress={() => setIsExclusive(!isExclusive)}
+                  activeOpacity={0.8}
+                >
+                  <View style={[styles.switchThumb, isExclusive && styles.switchThumbActive]} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Singles Selection (if not exclusive) */}
+            {!isExclusive && audioFiles.length > 0 && (
+              <View style={styles.dropConfigItem}>
+                <Text style={styles.dropConfigLabel}>SINGLES AVAILABLE FOR STREAMING</Text>
+                <Text style={styles.dropConfigHelp}>
+                  Select tracks that fans can stream without owning the disc
+                </Text>
+                <View style={styles.singlesGrid}>
+                  {audioFiles.map((file, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.singleChip,
+                        selectedSingles.includes(index) && styles.singleChipActive,
+                      ]}
+                      onPress={() => toggleSingle(index)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons
+                        name={selectedSingles.includes(index) ? 'checkmark-circle' : 'ellipse-outline'}
+                        size={16}
+                        color={selectedSingles.includes(index) ? '#06FFA5' : '#9A9A9A'}
+                      />
+                      <Text
+                        style={[
+                          styles.singleChipText,
+                          selectedSingles.includes(index) && styles.singleChipTextActive,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {file.name.replace(/\.[^/.]+$/, '')}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Edition Limit */}
+            <View style={styles.dropConfigItem}>
+              <Text style={styles.dropConfigLabel}>EDITION LIMIT (OPTIONAL)</Text>
+              <TextInput
+                style={styles.editionInput}
+                placeholder="Unlimited"
+                placeholderTextColor="#666666"
+                value={totalEditions}
+                onChangeText={setTotalEditions}
+                keyboardType="number-pad"
+                editable={!isUploading}
+              />
+              <Text style={styles.dropConfigHelp}>
+                {totalEditions 
+                  ? `Limited to ${totalEditions} discs`
+                  : 'Leave blank for unlimited editions'}
+              </Text>
+            </View>
+
+            {/* Manufacturing Message */}
+            <View style={styles.manufacturingNote}>
+              <Ionicons name="information-circle" size={16} color="#3A86FF" />
+              <Text style={styles.manufacturingNoteText}>
+                Stream Discs are produced and shipped in scheduled manufacturing batches
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Publish to Store Toggle (Premium Only) - DEPRECATED, keeping for backwards compat */}
+        {false && isPremium && (
           <TouchableOpacity
             style={styles.publishToggle}
             onPress={() => {

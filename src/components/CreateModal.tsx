@@ -276,20 +276,25 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
   };
 
   const handleProgramDisc = () => {
-    console.log('[CreateModal] Program Disc button pressed');
-    console.log('[CreateModal] Closing NFC modal, staying in Studio mode');
+    console.log('🔥 [CreateModal] Program Disc button pressed');
+    console.log('🔥 [CreateModal] showNfcScanning BEFORE:', showNfcScanning);
     
     // Close the NFC modal but keep the Studio grid visible
     setShowNfcScanning(false);
     setIsBlankDisc(false);
     setNfcStatus('');
     
-    // User stays in Studio mode and can now select Album (or other content type)
-    console.log('[CreateModal] NFC modal closed - Studio grid ready for content selection');
+    // Force a small delay to ensure state updates
+    setTimeout(() => {
+      console.log('🔥 [CreateModal] NFC modal closed - Studio grid ready');
+      console.log('🔥 [CreateModal] showNfcScanning AFTER:', showNfcScanning);
+      console.log('🔥 [CreateModal] Try scrolling the Studio grid now');
+    }, 100);
   };
 
   const handleCardPress = (route: string, type: string, locked: boolean) => {
-    console.log(`[CreateModal] Card pressed: ${type}, locked: ${locked}`);
+    console.log(`🔥 [CreateModal] Card pressed: ${type}, locked: ${locked}`);
+    console.log(`🔥 [CreateModal] showNfcScanning state: ${showNfcScanning}`);
     
     if (locked) {
       console.log(`[CreateModal] ${type} is locked - Premium feature`);
@@ -409,6 +414,14 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          scrollEnabled={!showNfcScanning}
+          onScrollBeginDrag={() => {
+            console.log('🔥 [CreateModal] User started scrolling!');
+          }}
+          onScroll={() => {
+            console.log('🔥 [CreateModal] ScrollView is scrolling...');
+          }}
+          scrollEventThrottle={400}
         >
           {mode === 'studio' && renderStudioContent()}
           {mode === 'post' && renderPostContent()}
@@ -416,7 +429,7 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
         </ScrollView>
 
         {/* Bottom Navigation (Always visible) */}
-        <View style={styles.bottomNav}>
+        <View style={styles.bottomNav} pointerEvents={showNfcScanning ? 'none' : 'auto'}>
           <TouchableOpacity 
             style={styles.navButton} 
             activeOpacity={0.6}
@@ -471,10 +484,12 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
         </View>
 
         {/* Mode Carousel - Positioned above bottom nav */}
-        <ModeCarousel activeMode={mode} onModeChange={onModeChange} />
+        <View pointerEvents={showNfcScanning ? 'none' : 'auto'}>
+          <ModeCarousel activeMode={mode} onModeChange={onModeChange} />
+        </View>
 
         {/* Floating Create Button */}
-        <View style={styles.floatingButtonContainer}>
+        <View style={styles.floatingButtonContainer} pointerEvents={showNfcScanning ? 'none' : 'box-none'}>
           <TouchableOpacity
             style={[
               styles.floatingCreateButton,
@@ -564,6 +579,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    zIndex: 1,
   },
   scrollContent: {
     paddingHorizontal: 16,
@@ -574,6 +590,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
+    zIndex: 1,
   },
   cardContainer: {
     width: cardWidth,

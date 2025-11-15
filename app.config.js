@@ -88,7 +88,7 @@ export default {
   },
   
   // Plugins
-  plugins: ['expo-router'],
+  plugins: ['expo-router', 'expo-font'],
   
   // Extra configuration
   extra: {
@@ -98,11 +98,6 @@ export default {
     eas: {
       projectId: 'd889fbc1-0d02-4251-b2e9-d9aebd9ac247',
     },
-  },
-  
-  // Hooks
-  hooks: {
-    postPublish: [],
   },
 };
 

@@ -25,6 +25,8 @@ export default function ModeCarousel({ activeMode, onModeChange }: ModeCarouselP
   const scrollViewRef = useRef<ScrollView>(null);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   
+  console.log('🎯 [ModeCarousel] Rendered with activeMode:', activeMode);
+  
   const modes = [
     {
       id: 'studio' as CreateMode,
@@ -122,7 +124,10 @@ export default function ModeCarousel({ activeMode, onModeChange }: ModeCarouselP
             <TouchableOpacity
               key={mode.id}
               style={[styles.modeCard, isActive && styles.modeCardActive]}
-              onPress={() => onModeChange(mode.id)}
+              onPress={() => {
+                console.log('🎯 [ModeCarousel] Button pressed:', mode.label);
+                onModeChange(mode.id);
+              }}
               activeOpacity={0.7}
             >
               {isActive ? (

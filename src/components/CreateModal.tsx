@@ -429,7 +429,7 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
         </ScrollView>
 
         {/* Bottom Navigation (Always visible) */}
-        <View style={styles.bottomNav} pointerEvents={showNfcScanning ? 'none' : 'auto'}>
+        <View style={styles.bottomNav} pointerEvents="auto">
           <TouchableOpacity 
             style={styles.navButton} 
             activeOpacity={0.6}
@@ -483,13 +483,8 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
           </TouchableOpacity>
         </View>
 
-        {/* Mode Carousel - Positioned above bottom nav */}
-        <View pointerEvents={showNfcScanning ? 'none' : 'auto'}>
-          <ModeCarousel activeMode={mode} onModeChange={onModeChange} />
-        </View>
-
         {/* Floating Create Button */}
-        <View style={styles.floatingButtonContainer} pointerEvents={showNfcScanning ? 'none' : 'box-none'}>
+        <View style={styles.floatingButtonContainer} pointerEvents="box-none">
           <TouchableOpacity
             style={[
               styles.floatingCreateButton,
@@ -516,6 +511,9 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
             )}
           </TouchableOpacity>
         </View>
+
+        {/* Mode Carousel - MUST BE LAST to render on top */}
+        <ModeCarousel activeMode={mode} onModeChange={onModeChange} />
       </SafeAreaView>
 
       {/* NFC Scanning Modal */}

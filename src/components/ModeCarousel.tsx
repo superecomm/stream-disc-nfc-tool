@@ -155,7 +155,9 @@ const styles = StyleSheet.create({
     bottom: 100, // Above bottom nav with more spacing
     left: 0,
     right: 0,
-    zIndex: 100,
+    zIndex: 1000,
+    elevation: 1000,
+    backgroundColor: 'transparent',
   },
   scrollContent: {
     paddingHorizontal: width / 2 - 50, // Half screen minus half button width (100/2)

@@ -585,6 +585,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 280,
+    zIndex: 1,
   },
   cardsGrid: {
     flexDirection: 'row',
@@ -659,7 +660,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     borderTopWidth: 1,
     borderTopColor: '#1C1C1E',
-    zIndex: 10,
+    zIndex: 500,
+    elevation: 500,
   },
   navButton: {
     alignItems: 'center',
@@ -683,7 +685,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    zIndex: 1000,
+    zIndex: 2000,
+    elevation: 2000,
     pointerEvents: 'box-none',
   },
   floatingCreateButton: {

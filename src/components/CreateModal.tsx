@@ -399,7 +399,6 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
     >
       <View style={styles.modalOverlay}>
         <SafeAreaView style={styles.container}>
-          <View style={styles.contentWrapper}>
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -430,11 +429,7 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
             {mode === 'post' && renderPostContent()}
             {mode === 'live' && renderLiveContent()}
           </ScrollView>
-
-          {/* Mode Carousel - MUST BE LAST to render on top */}
-          <ModeCarousel activeMode={mode} onModeChange={onModeChange} />
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
       </View>
 
       {/* NFC Scanning Modal */}
@@ -460,16 +455,12 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(0, 0, 0, 0.95)', // Semi-transparent to show parent nav through
+    paddingBottom: 90, // Space for parent's bottom nav (80px) + spacing
   },
   container: {
     flex: 1,
-    backgroundColor: '#000000',
-    paddingBottom: 90, // Space for parent's bottom nav (80px nav + 10px spacing)
-  },
-  contentWrapper: {
-    flex: 1,
-    position: 'relative',
+    backgroundColor: 'transparent',
   },
   header: {
     flexDirection: 'row',
@@ -512,7 +503,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 280,
+    paddingBottom: 120, // Reduced from 280 - space for ModeCarousel (40px) + bottom nav (80px)
     zIndex: 1,
   },
   cardsGrid: {

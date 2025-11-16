@@ -456,8 +456,8 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // More transparent to show parent through
-    paddingBottom: 180, // Space for parent's bottom nav (80px) + ModeCarousel (40px) + spacing
+    backgroundColor: '#000000', // Solid black - no transparency
+    paddingBottom: 0, // Remove padding - not needed
   },
   container: {
     flex: 1,
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 120, // Reduced from 280 - space for ModeCarousel (40px) + bottom nav (80px)
+    paddingBottom: 200, // Space so last cards aren't hidden by bottom nav
     zIndex: 1,
   },
   cardsGrid: {

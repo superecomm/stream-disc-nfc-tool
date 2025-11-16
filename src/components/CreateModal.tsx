@@ -397,39 +397,40 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
       onRequestClose={onClose}
     >
       <SafeAreaView style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Ionicons name="close" size={28} color="#FFFFFF" />
-          </TouchableOpacity>
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>{headerTitle.main}</Text>
-            <Text style={styles.subtitle}>{headerTitle.sub}</Text>
+        <View style={styles.contentWrapper}>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Ionicons name="close" size={28} color="#FFFFFF" />
+            </TouchableOpacity>
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>{headerTitle.main}</Text>
+              <Text style={styles.subtitle}>{headerTitle.sub}</Text>
+            </View>
+            <View style={styles.placeholder} />
           </View>
-          <View style={styles.placeholder} />
-        </View>
 
-        {/* Content */}
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          scrollEnabled={!showNfcScanning}
-          onScrollBeginDrag={() => {
-            console.log('🔥 [CreateModal] User started scrolling!');
-          }}
-          onScroll={() => {
-            console.log('🔥 [CreateModal] ScrollView is scrolling...');
-          }}
-          scrollEventThrottle={400}
-        >
-          {mode === 'studio' && renderStudioContent()}
-          {mode === 'post' && renderPostContent()}
-          {mode === 'live' && renderLiveContent()}
-        </ScrollView>
+          {/* Content */}
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            scrollEnabled={!showNfcScanning}
+            onScrollBeginDrag={() => {
+              console.log('🔥 [CreateModal] User started scrolling!');
+            }}
+            onScroll={() => {
+              console.log('🔥 [CreateModal] ScrollView is scrolling...');
+            }}
+            scrollEventThrottle={400}
+          >
+            {mode === 'studio' && renderStudioContent()}
+            {mode === 'post' && renderPostContent()}
+            {mode === 'live' && renderLiveContent()}
+          </ScrollView>
 
-        {/* Bottom Navigation (Always visible) */}
-        <View style={styles.bottomNav} pointerEvents="auto">
+          {/* Bottom Navigation (Always visible) */}
+          <View style={styles.bottomNav} pointerEvents="auto">
           <TouchableOpacity 
             style={styles.navButton} 
             activeOpacity={0.6}
@@ -512,8 +513,9 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
           </TouchableOpacity>
         </View>
 
-        {/* Mode Carousel - MUST BE LAST to render on top */}
-        <ModeCarousel activeMode={mode} onModeChange={onModeChange} />
+          {/* Mode Carousel - MUST BE LAST to render on top */}
+          <ModeCarousel activeMode={mode} onModeChange={onModeChange} />
+        </View>
       </SafeAreaView>
 
       {/* NFC Scanning Modal */}
@@ -540,6 +542,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
+  },
+  contentWrapper: {
+    flex: 1,
+    position: 'relative',
   },
   header: {
     flexDirection: 'row',

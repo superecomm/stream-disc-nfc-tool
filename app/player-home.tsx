@@ -714,6 +714,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     borderTopWidth: 1,
     borderTopColor: '#1C1C1E',
+    zIndex: 9999, // Above everything including modals
+    elevation: 9999, // Android
   },
   navButton: {
     alignItems: 'center',

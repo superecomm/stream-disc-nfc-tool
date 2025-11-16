@@ -389,15 +389,10 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
 
   const headerTitle = getHeaderTitle();
 
+  if (!visible) return null;
+
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="overFullScreen"
-      transparent={true}
-      onRequestClose={onClose}
-      statusBarTranslucent={false}
-    >
+    <>
       <View style={styles.modalOverlay}>
         <SafeAreaView style={styles.container}>
           {/* Header */}
@@ -433,7 +428,7 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
         </SafeAreaView>
       </View>
 
-      {/* NFC Scanning Modal */}
+      {/* NFC Scanning Modal - Keep as actual Modal for proper behavior */}
       <NfcScanModal
         visible={showNfcScanning}
         onClose={() => {
@@ -449,19 +444,25 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
         onActionButtonPress={handleProgramDisc}
         showBlankDiscImage={isBlankDisc}
       />
-    </Modal>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   modalOverlay: {
-    flex: 1,
-    backgroundColor: '#000000', // Solid black - no transparency
-    paddingBottom: 0, // Remove padding - not needed
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#000000', // Solid black
+    zIndex: 100, // Below bottom nav (9999) but above content
+    elevation: 100, // Android
   },
   container: {
     flex: 1,
     backgroundColor: '#000000',
+    paddingBottom: 90, // Space for bottom nav
   },
   header: {
     flexDirection: 'row',

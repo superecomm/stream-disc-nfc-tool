@@ -393,11 +393,13 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="fullScreen"
+      transparent={true}
       onRequestClose={onClose}
+      statusBarTranslucent={false}
     >
-      <SafeAreaView style={styles.container}>
-        <View style={styles.contentWrapper}>
+      <View style={styles.modalOverlay}>
+        <SafeAreaView style={styles.container}>
+          <View style={styles.contentWrapper}>
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -429,94 +431,11 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
             {mode === 'live' && renderLiveContent()}
           </ScrollView>
 
-          {/* Bottom Navigation (Always visible) */}
-          <View style={styles.bottomNav} pointerEvents="auto">
-          <TouchableOpacity 
-            style={styles.navButton} 
-            activeOpacity={0.6}
-            onPress={() => {
-              onClose();
-              router.push('/player-home');
-            }}
-          >
-            <Ionicons name="home-outline" size={24} color="#999999" />
-            <Text style={styles.navLabel}>Home</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.navButton} 
-            activeOpacity={0.6}
-            onPress={() => {
-              onClose();
-              router.push('/library');
-            }}
-          >
-            <Ionicons name="library-outline" size={24} color="#999999" />
-            <Text style={styles.navLabel}>Library</Text>
-          </TouchableOpacity>
-
-          <View style={styles.createButtonPlaceholder}>
-            {/* Create button placeholder - actual button is in parent */}
-          </View>
-
-          <TouchableOpacity 
-            style={styles.navButton} 
-            activeOpacity={0.6}
-            onPress={() => {
-              onClose();
-              router.push('/inbox');
-            }}
-          >
-            <Ionicons name="mail-outline" size={24} color="#999999" />
-            <Text style={styles.navLabel}>Inbox</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.navButton} 
-            activeOpacity={0.6}
-            onPress={() => {
-              onClose();
-              router.push('/profile');
-            }}
-          >
-            <Ionicons name="person-outline" size={24} color="#999999" />
-            <Text style={styles.navLabel}>Profile</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Floating Create Button */}
-        <View style={styles.floatingButtonContainer} pointerEvents="box-none">
-          <TouchableOpacity
-            style={[
-              styles.floatingCreateButton,
-              mode === 'studio' && styles.floatingButtonStudio,
-              mode === 'live' && !isLiveRecording && styles.floatingButtonLiveInactive,
-              mode === 'live' && isLiveRecording && styles.floatingButtonLiveActive,
-            ]}
-            onPress={handleButtonPress}
-            activeOpacity={0.8}
-          >
-            {mode === 'studio' ? (
-              <Ionicons name="flame" size={32} color="#FFFFFF" />
-            ) : mode === 'post' ? (
-              <Ionicons name="add" size={32} color="#000000" />
-            ) : mode === 'live' && isLiveRecording ? (
-              <View style={styles.recordingIndicator}>
-                <View style={styles.recordingDot} />
-                <Text style={styles.recordingTime}>{formatTime(recordingTime)}</Text>
-              </View>
-            ) : (
-              <View style={styles.liveInactiveIcon}>
-                <Ionicons name="radio" size={28} color="#FF3B5C" />
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
-
           {/* Mode Carousel - MUST BE LAST to render on top */}
           <ModeCarousel activeMode={mode} onModeChange={onModeChange} />
         </View>
       </SafeAreaView>
+      </View>
 
       {/* NFC Scanning Modal */}
       <NfcScanModal
@@ -539,9 +458,14 @@ export default function CreateModal({ visible, onClose, mode, onModeChange }: Cr
 }
 
 const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
   container: {
     flex: 1,
     backgroundColor: '#000000',
+    paddingBottom: 90, // Space for parent's bottom nav (80px nav + 10px spacing)
   },
   contentWrapper: {
     flex: 1,

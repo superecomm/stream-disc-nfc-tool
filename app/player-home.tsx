@@ -400,6 +400,7 @@ export default function PlayerHomeScreen() {
   );
 
   return (
+    <>
     <SafeAreaView style={styles.container}>
       <ScrollView
         style={styles.scrollView}
@@ -549,16 +550,17 @@ export default function PlayerHomeScreen() {
           <Text style={styles.navLabel}>Profile</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Create Modal */}
-      <CreateModal
-        visible={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        mode={createMode}
-        onModeChange={setCreateMode}
-      />
     </SafeAreaView>
-  );
+
+    {/* Create Modal - OUTSIDE SafeAreaView for proper absolute positioning in builds */}
+    <CreateModal
+      visible={showCreateModal}
+      onClose={() => setShowCreateModal(false)}
+      mode={createMode}
+      onModeChange={setCreateMode}
+    />
+  </>
+);
 }
 
 const styles = StyleSheet.create({

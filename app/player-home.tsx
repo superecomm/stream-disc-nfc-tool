@@ -550,15 +550,15 @@ export default function PlayerHomeScreen() {
           <Text style={styles.navLabel}>Profile</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
 
-    {/* Create Modal - OUTSIDE SafeAreaView for proper absolute positioning in builds */}
-    <CreateModal
-      visible={showCreateModal}
-      onClose={() => setShowCreateModal(false)}
-      mode={createMode}
-      onModeChange={setCreateMode}
-    />
+      {/* Create Modal - AFTER bottom nav in JSX so nav renders on top */}
+      <CreateModal
+        visible={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        mode={createMode}
+        onModeChange={setCreateMode}
+      />
+    </SafeAreaView>
   </>
 );
 }
